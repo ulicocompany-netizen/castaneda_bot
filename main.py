@@ -22,57 +22,42 @@ client = AsyncOpenAI(
     base_url="https://api.deepseek.com/v1"
 )
 
-# ============================================
-# 🎨 ФУНКЦИЯ ОПРЕДЕЛЕНИЯ ВРЕМЕНИ СУТОК
-# ============================================
 def get_time_theme():
-    """Возвращает тему и картинку в зависимости от времени"""
     hour = datetime.datetime.now().hour
     
     if 6 <= hour < 12:
-        # ☀️ УТРО (6:00 - 12:00)
         return {
             "emoji": "☀️",
             "greeting": "Доброе утро, воин",
             "description": "Солнце встаёт из-за горизонта. Новый день — новые возможности.",
             "color": "🌅",
-            # 👇 ЗАМЕНИ ССЫЛКУ НИЖЕ НА СВОЮ КАРТИНКУ (утро/рассвет)
-            "photo_url": "https://ibb.co/7dS4JgCm"  
+            "photo_url": "https://i.ibb.co/ymSC6nmb"  # ← ЗАМЕНИ НА СВОЮ ССЫЛКУ
         }
     elif 12 <= hour < 17:
-        # 🌤️ ДЕНЬ (12:00 - 17:00)
         return {
             "emoji": "🌤️",
             "greeting": "Добрый день, путник",
             "description": "Солнце в зените. Время действия и силы.",
             "color": "☀️",
-            # 👇 ЗАМЕНИ ССЫЛКУ НИЖЕ НА СВОЮ КАРТИНКУ (день/яркое солнце)
-            "photo_url": "https://ibb.co/ymsC6nmb"  
+            "photo_url": "https://i.ibb.co/HD4ND8QS"  # ← ЗАМЕНИ НА СВОЮ ССЫЛКУ
         }
     elif 17 <= hour < 22:
-        # 🌆 ВЕЧЕР (17:00 - 22:00)
         return {
             "emoji": "🌆",
             "greeting": "Добрый вечер, странник",
             "description": "Солнце садится. Время размышлений и видения.",
             "color": "🌄",
-            # 👇 ЗАМЕНИ ССЫЛКУ НИЖЕ НА СВОЮ КАРТИНКУ (закат/вечер)
-            "photo_url": "https://ibb.co/q3RTtMDG"  
+            "photo_url": "https://i.ibb.co/q3RTtMDG"  # ← ЗАМЕНИ НА СВОЮ ССЫЛКУ
         }
     else:
-        # 🌙 НОЧЬ (22:00 - 6:00)
         return {
             "emoji": "🌙",
             "greeting": "Доброй ночи, видящий",
             "description": "Ночь наступила. Время снов и второго внимания.",
             "color": "✨",
-            # 👇 ЗАМЕНИ ССЫЛКУ НИЖЕ НА СВОЮ КАРТИНКУ (ночь/звёзды)
-            "photo_url": "https://ibb.co/HD4ND8QS"  
+            "photo_url": "https://i.ibb.co/7dS4jgCm"  # ← ЗАМЕНИ НА СВОЮ ССЫЛКУ
         }
 
-# ============================================
-# 🚀 КОМАНДА /start
-# ============================================
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
     theme = get_time_theme()
@@ -85,7 +70,6 @@ async def cmd_start(message: types.Message):
         f"Выбери язык общения:"
     )
     
-    # Отправляем с картинкой
     try:
         await message.answer_photo(
             photo=theme["photo_url"],
@@ -94,16 +78,12 @@ async def cmd_start(message: types.Message):
             parse_mode="Markdown"
         )
     except:
-        # Если картинка не загрузилась — просто текст
         await message.answer(
             text,
             reply_markup=get_language_keyboard(),
             parse_mode="Markdown"
         )
 
-# ============================================
-# 🌐 ВЫБОР ЯЗЫКА
-# ============================================
 @dp.callback_query(lambda c: c.data.startswith("lang_"))
 async def process_language(callback: CallbackQuery):
     lang = callback.data.split("_")[1]
@@ -120,9 +100,6 @@ async def process_language(callback: CallbackQuery):
     )
     await callback.answer()
 
-# ============================================
-# 📋 КОМАНДА /menu
-# ============================================
 @dp.message(Command("menu"))
 async def cmd_menu(message: types.Message):
     theme = get_time_theme()
@@ -132,9 +109,6 @@ async def cmd_menu(message: types.Message):
         parse_mode="Markdown"
     )
 
-# ============================================
-# 🎯 ОБРАБОТКА КНОПОК МЕНЮ
-# ============================================
 @dp.callback_query(lambda c: c.data.startswith("session_"))
 async def process_session(callback: CallbackQuery):
     session_type = callback.data.replace("session_", "")
@@ -144,4 +118,43 @@ async def process_session(callback: CallbackQuery):
         "death": "💀 **Разговор со смертью**\n\nСмерть стоит за твоим левым плечом...\nЧто бы ты сделал иначе, если бы знал, что это последний день?",
         "heart": "❤️ **Путь с сердцем**\n\nЕсть ли радость в том, что ты делаешь?\nИли лишь долг и страх?",
         "dreams": "🦅 **Видение снов**\n\nРасскажи свой сон. Мы посмотрим на него через призму второго внимания.",
-        "
+        "intention": "⚡ **Намерение**\n\nСформулируй своё намерение. Не цель — а намерение. Почувствуй разницу."
+    }
+    
+    text = sessions.get(session_type, "🤔 Выбери практику из меню")
+    await callback.message.answer(text, parse_mode="Markdown")
+    await callback.answer()
+
+@dp.message()
+async def handle_chat(message: types.Message):
+    user_id = message.from_user.id
+    context = await get_context(user_id)
+    
+    messages = [{"role": "system", "content": CASTANEDA_THERAPY_PROMPT}]
+    messages.extend(context)
+    messages.append({"role": "user", "content": message.text})
+    
+    await bot.send_chat_action(message.chat.id, "typing")
+    
+    try:
+        response = await client.chat.completions.create(
+            model="deepseek-chat",
+            messages=messages,
+            temperature=0.75,
+            max_tokens=600
+        )
+        reply = response.choices[0].message.content
+        await save_message(user_id, "user", message.text)
+        await save_message(user_id, "assistant", reply)
+        await message.answer(reply)
+    except Exception as e:
+        await message.answer("🌫 Мир зашумел... Подожди мгновение и попробуй снова.")
+        print(f"DeepSeek Error: {e}")
+
+async def main():
+    await init_db()
+    print("🪶 Бот запущен...")
+    await dp.start_polling(bot)
+
+if __name__ == "__main__":
+    asyncio.run(main())

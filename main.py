@@ -1,5 +1,6 @@
 import os
 import asyncio
+import datetime
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import CallbackQuery
@@ -21,40 +22,121 @@ client = AsyncOpenAI(
     base_url="https://api.deepseek.com/v1"
 )
 
+# ============================================
+# 🎨 ФУНКЦИЯ ОПРЕДЕЛЕНИЯ ВРЕМЕНИ СУТОК
+# ============================================
+def get_time_theme():
+    """Возвращает тему и картинку в зависимости от времени"""
+    hour = datetime.datetime.now().hour
+    
+    if 6 <= hour < 12:
+        # ☀️ УТРО (6:00 - 12:00)
+        return {
+            "emoji": "☀️",
+            "greeting": "Доброе утро, воин",
+            "description": "Солнце встаёт из-за горизонта. Новый день — новые возможности.",
+            "color": "🌅",
+            # 👇 ЗАМЕНИ ССЫЛКУ НИЖЕ НА СВОЮ КАРТИНКУ (утро/рассвет)
+            "photo_url": "https://ibb.co/7dS4JgCm"  
+        }
+    elif 12 <= hour < 17:
+        # 🌤️ ДЕНЬ (12:00 - 17:00)
+        return {
+            "emoji": "🌤️",
+            "greeting": "Добрый день, путник",
+            "description": "Солнце в зените. Время действия и силы.",
+            "color": "☀️",
+            # 👇 ЗАМЕНИ ССЫЛКУ НИЖЕ НА СВОЮ КАРТИНКУ (день/яркое солнце)
+            "photo_url": "https://ibb.co/ymsC6nmb"  
+        }
+    elif 17 <= hour < 22:
+        # 🌆 ВЕЧЕР (17:00 - 22:00)
+        return {
+            "emoji": "🌆",
+            "greeting": "Добрый вечер, странник",
+            "description": "Солнце садится. Время размышлений и видения.",
+            "color": "🌄",
+            # 👇 ЗАМЕНИ ССЫЛКУ НИЖЕ НА СВОЮ КАРТИНКУ (закат/вечер)
+            "photo_url": "https://ibb.co/q3RTtMDG"  
+        }
+    else:
+        # 🌙 НОЧЬ (22:00 - 6:00)
+        return {
+            "emoji": "🌙",
+            "greeting": "Доброй ночи, видящий",
+            "description": "Ночь наступила. Время снов и второго внимания.",
+            "color": "✨",
+            # 👇 ЗАМЕНИ ССЫЛКУ НИЖЕ НА СВОЮ КАРТИНКУ (ночь/звёзды)
+            "photo_url": "https://ibb.co/HD4ND8QS"  
+        }
+
+# ============================================
+# 🚀 КОМАНДА /start
+# ============================================
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
-    await message.answer(
-        "🪶 Добро пожаловать на путь воина.\n\n"
-        "Выбери язык общения, затем задай вопрос или поделись тем, что тяготит.\n"
-        "Помни: мир — лишь описание. Готов ли ты его остановить?",
-        reply_markup=get_language_keyboard()
+    theme = get_time_theme()
+    
+    text = (
+        f"{theme['emoji']} **{theme['greeting']}**\n\n"
+        f"{theme['description']}\n\n"
+        f"🪶 Добро пожаловать на путь воина.\n\n"
+        f"{theme['color']} Мир — лишь описание. Готов ли ты его остановить?\n\n"
+        f"Выбери язык общения:"
     )
+    
+    # Отправляем с картинкой
+    try:
+        await message.answer_photo(
+            photo=theme["photo_url"],
+            caption=text,
+            reply_markup=get_language_keyboard(),
+            parse_mode="Markdown"
+        )
+    except:
+        # Если картинка не загрузилась — просто текст
+        await message.answer(
+            text,
+            reply_markup=get_language_keyboard(),
+            parse_mode="Markdown"
+        )
 
+# ============================================
+# 🌐 ВЫБОР ЯЗЫКА
+# ============================================
 @dp.callback_query(lambda c: c.data.startswith("lang_"))
 async def process_language(callback: CallbackQuery):
     lang = callback.data.split("_")[1]
     user_id = callback.from_user.id
     await set_user_lang(user_id, lang)
     
-    lang_names = {"ru": "🇷🇺 Русский", "en": "🇺🇸 English", "es": "🇪🇸 Español"}
+    theme = get_time_theme()
+    lang_names = {"ru": "🇷🇺 Русский", "en": "🇬🇧 English"}
     
     await callback.message.answer(
         f"✅ Язык установлен: {lang_names.get(lang, lang)}\n\n"
-        "Теперь используй /menu для выбора практики.",
+        f"{theme['emoji']} Теперь используй /menu для выбора практики.",
         reply_markup=get_main_menu_keyboard()
     )
     await callback.answer()
 
+# ============================================
+# 📋 КОМАНДА /menu
+# ============================================
 @dp.message(Command("menu"))
 async def cmd_menu(message: types.Message):
+    theme = get_time_theme()
     await message.answer(
-        "🌑 Выбери практику:",
-        reply_markup=get_main_menu_keyboard()
+        f"{theme['emoji']} **Выбери практику:**",
+        reply_markup=get_main_menu_keyboard(),
+        parse_mode="Markdown"
     )
 
+# ============================================
+# 🎯 ОБРАБОТКА КНОПОК МЕНЮ
+# ============================================
 @dp.callback_query(lambda c: c.data.startswith("session_"))
 async def process_session(callback: CallbackQuery):
-    # ВАЖНО: берём всё после "session_"
     session_type = callback.data.replace("session_", "")
     
     sessions = {
@@ -62,59 +144,4 @@ async def process_session(callback: CallbackQuery):
         "death": "💀 **Разговор со смертью**\n\nСмерть стоит за твоим левым плечом...\nЧто бы ты сделал иначе, если бы знал, что это последний день?",
         "heart": "❤️ **Путь с сердцем**\n\nЕсть ли радость в том, что ты делаешь?\nИли лишь долг и страх?",
         "dreams": "🦅 **Видение снов**\n\nРасскажи свой сон. Мы посмотрим на него через призму второго внимания.",
-        "intention": "⚡ **Намерение**\n\nСформулируй своё намерение. Не цель — а намерение. Почувствуй разницу."
-    }
-    
-    text = sessions.get(session_type, " Выбери практику из меню")
-    await callback.message.answer(text)
-    await callback.answer()
-
-@dp.callback_query(lambda c: c.data == "premium_sessions")
-async def process_premium(callback: CallbackQuery):
-    await callback.message.answer(
-        "🔒 **Premium-сессии**\n\n"
-        "🦅 Видение снов\n"
-        "⚡ Намерение\n"
-        "🗺 Карта пути\n\n"
-        "Доступно по подписке. Оформить?",
-        reply_markup=get_premium_sessions_keyboard()
-    )
-    await callback.answer()
-
-@dp.callback_query(lambda c: c.data == "subscribe")
-async def process_subscribe(callback: CallbackQuery):
-    await handle_subscribe(callback)
-
-@dp.message()
-async def handle_chat(message: types.Message):
-    user_id = message.from_user.id
-    context = await get_context(user_id)
-    
-    messages = [{"role": "system", "content": CASTANEDA_THERAPY_PROMPT}]
-    messages.extend(context)
-    messages.append({"role": "user", "content": message.text})
-    
-    await bot.send_chat_action(message.chat.id, "typing")
-    
-    try:
-        response = await client.chat.completions.create(
-            model="deepseek-chat",
-            messages=messages,
-            temperature=0.75,
-            max_tokens=600
-        )
-        reply = response.choices[0].message.content
-        await save_message(user_id, "user", message.text)
-        await save_message(user_id, "assistant", reply)
-        await message.answer(reply)
-    except Exception as e:
-        await message.answer("🌫 Мир зашумел... Подожди мгновение.")
-        print(f"Error: {e}")
-
-async def main():
-    await init_db()
-    print(" Бот запущен...")
-    await dp.start_polling(bot)
-
-if __name__ == "__main__":
-    asyncio.run(main())
+        "

@@ -31,7 +31,7 @@ def get_time_theme():
             "greeting": "Доброе утро, воин",
             "description": "Солнце встаёт из-за горизонта. Новый день — новые возможности.",
             "color": "🌅",
-            "photo_url": "https://i.ibb.co/ymSC6nmb"  # ← ЗАМЕНИ НА СВОЮ ССЫЛКУ
+            "photo_url": "https://i.ibb.co/wFdsNJgm/image.jpg"  # ← ЗАМЕНИ НА СВОЮ ССЫЛКУ
         }
     elif 12 <= hour < 17:
         return {
@@ -39,7 +39,7 @@ def get_time_theme():
             "greeting": "Добрый день, путник",
             "description": "Солнце в зените. Время действия и силы.",
             "color": "☀️",
-            "photo_url": "https://i.ibb.co/HD4ND8QS"  # ← ЗАМЕНИ НА СВОЮ ССЫЛКУ
+            "photo_url": "https://i.ibb.co/xK5b1SKR/1.jpg"  # ← ЗАМЕНИ НА СВОЮ ССЫЛКУ
         }
     elif 17 <= hour < 22:
         return {
@@ -47,7 +47,7 @@ def get_time_theme():
             "greeting": "Добрый вечер, странник",
             "description": "Солнце садится. Время размышлений и видения.",
             "color": "🌄",
-            "photo_url": "https://i.ibb.co/q3RTtMDG"  # ← ЗАМЕНИ НА СВОЮ ССЫЛКУ
+            "photo_url": "https://i.ibb.co/fzCjhYXR/image.jpg"  # ← ЗАМЕНИ НА СВОЮ ССЫЛКУ
         }
     else:
         return {
@@ -55,7 +55,7 @@ def get_time_theme():
             "greeting": "Доброй ночи, видящий",
             "description": "Ночь наступила. Время снов и второго внимания.",
             "color": "✨",
-            "photo_url": "https://i.ibb.co/7dS4jgCm"  # ← ЗАМЕНИ НА СВОЮ ССЫЛКУ
+            "photo_url": "https://i.ibb.co/MDS8D0Lv/image.jpg"  # ← ЗАМЕНИ НА СВОЮ ССЫЛКУ
         }
 
 @dp.message(Command("start"))

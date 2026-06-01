@@ -61,7 +61,7 @@ async def cmd_menu(message: types.Message):
 # Обработка кнопок меню
 @dp.callback_query(lambda c: c.data.startswith("session_"))
 async def process_session(callback: CallbackQuery):
-    session_type = callback.data.split("_")[1]
+    session_type = callback.data.replace("session_", "")
     
     sessions = {
         "stop_world": "🪶 **Остановить мир**\n\nПрактика прерывания автоматизмов мышления.\nОпиши ситуацию, которая заела.",

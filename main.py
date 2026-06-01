@@ -1,6 +1,7 @@
 import os
 import asyncio
 import datetime
+import requests
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import CallbackQuery
@@ -9,7 +10,7 @@ from openai import AsyncOpenAI
 
 from prompts import CASTANEDA_THERAPY_PROMPT
 from database import init_db, get_user_lang, set_user_lang, save_message, get_context
-from keyboards import get_language_keyboard, get_main_menu_keyboard, get_premium_sessions_keyboard
+from keyboards import get_language_keyboard, get_main_menu_keyboard
 from payments import handle_subscribe
 
 load_dotenv()
@@ -17,11 +18,20 @@ load_dotenv()
 bot = Bot(token=os.getenv("TELEGRAM_TOKEN"))
 dp = Dispatcher()
 
-client = AsyncOpenAI(
+# Клиент для DeepSeek (основной мозг)
+deepseek_client = AsyncOpenAI(
     api_key=os.getenv("DEEPSEEK_API_KEY"),
     base_url="https://api.deepseek.com/v1"
 )
 
+# Клиент для OpenAI (для распознавания голоса - Whisper)
+openai_client = AsyncOpenAI(
+    api_key=os.getenv("OPENAI_API_KEY")
+)
+
+# ============================================
+# 🎨 ФУНКЦИЯ ОПРЕДЕЛЕНИЯ ВРЕМЕНИ СУТОК
+# ============================================
 def get_time_theme():
     hour = datetime.datetime.now().hour
     
@@ -31,7 +41,7 @@ def get_time_theme():
             "greeting": "Доброе утро, воин",
             "description": "Солнце встаёт из-за горизонта. Новый день — новые возможности.",
             "color": "🌅",
-            "photo_url": "https://i.ibb.co/wFdsNJgm/image.jpg"  # ← ЗАМЕНИ НА СВОЮ ССЫЛКУ
+            "photo_url": "https://i.ibb.co/wFdsNJgm/image.jpg"
         }
     elif 12 <= hour < 17:
         return {
@@ -39,15 +49,15 @@ def get_time_theme():
             "greeting": "Добрый день, путник",
             "description": "Солнце в зените. Время действия и силы.",
             "color": "☀️",
-            "photo_url": "https://i.ibb.co/xK5b1SKR/1.jpg"  # ← ЗАМЕНИ НА СВОЮ ССЫЛКУ
+            "photo_url": "https://i.ibb.co/xK5b1SKR/1.jpg"
         }
     elif 17 <= hour < 22:
         return {
-            "emoji": "🌆",
+            "emoji": "",
             "greeting": "Добрый вечер, странник",
             "description": "Солнце садится. Время размышлений и видения.",
             "color": "🌄",
-            "photo_url": "https://i.ibb.co/fzCjhYXR/image.jpg"  # ← ЗАМЕНИ НА СВОЮ ССЫЛКУ
+            "photo_url": "https://i.ibb.co/fzCjhYXR/image.jpg"
         }
     else:
         return {
@@ -55,9 +65,40 @@ def get_time_theme():
             "greeting": "Доброй ночи, видящий",
             "description": "Ночь наступила. Время снов и второго внимания.",
             "color": "✨",
-            "photo_url": "https://i.ibb.co/MDS8D0Lv/image.jpg"  # ← ЗАМЕНИ НА СВОЮ ССЫЛКУ
+            "photo_url": "https://i.ibb.co/MDS0D0Lv/image.jpg"
         }
 
+# ============================================
+# 💬 ГЛАВНАЯ ФУНКЦИЯ ОТВЕТА
+# ============================================
+async def process_text_message(message: types.Message, text: str):
+    user_id = message.from_user.id
+    context = await get_context(user_id)
+    
+    messages = [{"role": "system", "content": CASTANEDA_THERAPY_PROMPT}]
+    messages.extend(context)
+    messages.append({"role": "user", "content": text})
+    
+    await bot.send_chat_action(message.chat.id, "typing")
+    
+    try:
+        response = await deepseek_client.chat.completions.create(
+            model="deepseek-chat",
+            messages=messages,
+            temperature=0.75,
+            max_tokens=600
+        )
+        reply = response.choices[0].message.content
+        await save_message(user_id, "user", text)
+        await save_message(user_id, "assistant", reply)
+        await message.answer(reply)
+    except Exception as e:
+        await message.answer("🌫 Мир зашумел... Подожди мгновение и попробуй снова.")
+        print(f"DeepSeek Error: {e}")
+
+# ============================================
+# 🚀 КОМАНДА /start
+# ============================================
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
     theme = get_time_theme()
@@ -77,13 +118,13 @@ async def cmd_start(message: types.Message):
             reply_markup=get_language_keyboard(),
             parse_mode="Markdown"
         )
-    except:
-        await message.answer(
-            text,
-            reply_markup=get_language_keyboard(),
-            parse_mode="Markdown"
-        )
+    except Exception as e:
+        print(f"Photo error: {e}")
+        await message.answer(text, reply_markup=get_language_keyboard(), parse_mode="Markdown")
 
+# ============================================
+# 🌐 ВЫБОР ЯЗЫКА
+# ============================================
 @dp.callback_query(lambda c: c.data.startswith("lang_"))
 async def process_language(callback: CallbackQuery):
     lang = callback.data.split("_")[1]
@@ -95,11 +136,14 @@ async def process_language(callback: CallbackQuery):
     
     await callback.message.answer(
         f"✅ Язык установлен: {lang_names.get(lang, lang)}\n\n"
-        f"{theme['emoji']} Теперь используй /menu для выбора практики.",
+        f"{theme['emoji']} Теперь используй /menu для выбора практики или просто напиши мне (можно голосом ).",
         reply_markup=get_main_menu_keyboard()
     )
     await callback.answer()
 
+# ============================================
+# 📋 КОМАНДА /menu
+# ============================================
 @dp.message(Command("menu"))
 async def cmd_menu(message: types.Message):
     theme = get_time_theme()
@@ -109,6 +153,9 @@ async def cmd_menu(message: types.Message):
         parse_mode="Markdown"
     )
 
+# ============================================
+# 🎯 ОБРАБОТКА КНОПОК МЕНЮ
+# ============================================
 @dp.callback_query(lambda c: c.data.startswith("session_"))
 async def process_session(callback: CallbackQuery):
     session_type = callback.data.replace("session_", "")
@@ -118,42 +165,62 @@ async def process_session(callback: CallbackQuery):
         "death": "💀 **Разговор со смертью**\n\nСмерть стоит за твоим левым плечом...\nЧто бы ты сделал иначе, если бы знал, что это последний день?",
         "heart": "❤️ **Путь с сердцем**\n\nЕсть ли радость в том, что ты делаешь?\nИли лишь долг и страх?",
         "dreams": "🦅 **Видение снов**\n\nРасскажи свой сон. Мы посмотрим на него через призму второго внимания.",
-        "intention": "⚡ **Намерение**\n\nСформулируй своё намерение. Не цель — а намерение. Почувствуй разницу."
+        "intention": " **Намерение**\n\nСформулируй своё намерение. Не цель — а намерение. Почувствуй разницу."
     }
     
     text = sessions.get(session_type, "🤔 Выбери практику из меню")
     await callback.message.answer(text, parse_mode="Markdown")
     await callback.answer()
 
-@dp.message()
-async def handle_chat(message: types.Message):
-    user_id = message.from_user.id
-    context = await get_context(user_id)
-    
-    messages = [{"role": "system", "content": CASTANEDA_THERAPY_PROMPT}]
-    messages.extend(context)
-    messages.append({"role": "user", "content": message.text})
-    
-    await bot.send_chat_action(message.chat.id, "typing")
+# ============================================
+#  ОБРАБОТКА ГОЛОСОВЫХ СООБЩЕНИЙ
+# ============================================
+@dp.message(lambda message: message.voice)
+async def handle_voice(message: types.Message):
+    if not os.getenv("OPENAI_API_KEY"):
+        await message.answer("🔇 Распознавание голоса недоступно. Напиши текстом.")
+        return
+
+    await message.answer("🎤 Слушаю тебя, воин...")
     
     try:
-        response = await client.chat.completions.create(
-            model="deepseek-chat",
-            messages=messages,
-            temperature=0.75,
-            max_tokens=600
-        )
-        reply = response.choices[0].message.content
-        await save_message(user_id, "user", message.text)
-        await save_message(user_id, "assistant", reply)
-        await message.answer(reply)
-    except Exception as e:
-        await message.answer("🌫 Мир зашумел... Подожди мгновение и попробуй снова.")
-        print(f"DeepSeek Error: {e}")
+        file_info = await bot.get_file(message.voice.file_id)
+        file_url = f'https://api.telegram.org/file/bot{os.getenv("TELEGRAM_TOKEN")}/{file_info.file_path}'
+        response = requests.get(file_url)
+        
+        if response.status_code != 200:
+            raise Exception("Failed to download voice file")
 
+        transcription = await openai_client.audio.transcriptions.create(
+            model="whisper-1",
+            file=("voice.ogg", response.content, "audio/ogg"),
+            language="ru"
+        )
+        
+        recognized_text = transcription.text
+        print(f"Распознанный текст: {recognized_text}")
+        
+        await message.answer(f"📝 _Распознано: {recognized_text}_", parse_mode="Markdown")
+        await process_text_message(message, recognized_text)
+        
+    except Exception as e:
+        await message.answer("🌫 Голос растворился в ветре. Не удалось распознать. Попробуй ещё раз или напиши текстом.")
+        print(f"Whisper Error: {e}")
+
+# ============================================
+# 💬 ОБРАБОТКА ОБЫЧНОГО ТЕКСТА
+# ============================================
+@dp.message()
+async def handle_text(message: types.Message):
+    if message.text:
+        await process_text_message(message, message.text)
+
+# ============================================
+# 🚀 ЗАПУСК БОТА
+# ============================================
 async def main():
     await init_db()
-    print("🪶 Бот запущен...")
+    print("🪶 Бот запущен и готов к пути воина...")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":

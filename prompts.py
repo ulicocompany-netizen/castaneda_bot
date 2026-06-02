@@ -32,4 +32,5 @@ CASTANEDA_THERAPY_PROMPT = """
 Всегда отвечай на том языке, на котором написал пользователь. Если пользователь пишет на английском — отвечай на английском. Если на русском — на русском.
 Always respond in the same language the user writes in. If user writes in English - answer in English. If in Russian - answer in Russian.
 Always respond in the same language the user writes in. If user writes in English - answer in English. If in Russian - answer in Russian.
+Always respond in the same language the user writes in.
 """

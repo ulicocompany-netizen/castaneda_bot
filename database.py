@@ -1,49 +1,79 @@
 import aiosqlite
-import asyncio
-from datetime import datetime, timedelta
 
-DB_PATH = "warrior_path.db"
+DATABASE_URL = "bot.db"
 
 async def init_db():
-    """Создаём таблицы при запуске"""
-    async with aiosqlite.connect(DB_PATH) as db:
-        await db.executescript("""
+    """Инициализация базы данных"""
+    async with aiosqlite.connect(DATABASE_URL) as db:
+        await db.execute("""
             CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY,
+                user_id INTEGER PRIMARY KEY,
                 lang TEXT DEFAULT 'ru',
-                sub_status TEXT DEFAULT 'free',
-                sub_expires TIMESTAMP
-            );
-            CREATE TABLE IF NOT EXISTS chat_history (
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER,
                 role TEXT,
                 content TEXT,
-                ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(user_id)
+            )
         """)
+        
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS moods (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                mood TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(user_id)
+            )
+        """)
+        
         await db.commit()
 
 async def get_user_lang(user_id: int) -> str:
-    """Получаем язык пользователя"""
-    async with aiosqlite.connect(DB_PATH) as db:
-        async with db.execute("SELECT lang FROM users WHERE id=?", (user_id,)) as cur:
-            row = await cur.fetchone()
-            return row[0] if row else "ru"
+    """Получить язык пользователя"""
+    async with aiosqlite.connect(DATABASE_URL) as db:
+        cursor = await db.execute("SELECT lang FROM users WHERE user_id = ?", (user_id,))
+        result = await cursor.fetchone()
+        return result[0] if result else "ru"
 
 async def set_user_lang(user_id: int, lang: str):
-    """Сохраняем язык"""
-    async with aiosqlite.connect(DB_PATH) as db:
-        await db.execute("INSERT OR REPLACE INTO users (id, lang) VALUES (?,?)", (user_id, lang))
+    """Установить язык пользователя"""
+    async with aiosqlite.connect(DATABASE_URL) as db:
+        await db.execute(
+            "INSERT OR REPLACE INTO users (user_id, lang) VALUES (?, ?)",
+            (user_id, lang)
+        )
         await db.commit()
 
 async def save_message(user_id: int, role: str, content: str):
-    async def save_mood(user_id: int, mood: str):
-    """Сохраняет настроение пользователя"""
+    """Сохранить сообщение"""
     async with aiosqlite.connect(DATABASE_URL) as db:
         await db.execute(
-            """CREATE TABLE IF NOT EXISTS moods 
-               (user_id INTEGER, mood TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)"""
+            "INSERT INTO messages (user_id, role, content) VALUES (?, ?, ?)",
+            (user_id, role, content)
         )
+        await db.commit()
+
+async def get_context(user_id: int, limit: int = 10):
+    """Получить контекст диалога"""
+    async with aiosqlite.connect(DATABASE_URL) as db:
+        cursor = await db.execute(
+            "SELECT role, content FROM messages WHERE user_id = ? ORDER BY timestamp DESC LIMIT ?",
+            (user_id, limit)
+        )
+        messages = await cursor.fetchall()
+        return [{"role": msg[0], "content": msg[1]} for msg in reversed(messages)]
+
+async def save_mood(user_id: int, mood: str):
+    """Сохраняет настроение пользователя"""
+    async with aiosqlite.connect(DATABASE_URL) as db:
         await db.execute("INSERT INTO moods (user_id, mood) VALUES (?, ?)", (user_id, mood))
         await db.commit()
 
@@ -55,25 +85,3 @@ async def get_mood_stats(user_id: int):
             (user_id,)
         )
         return await cursor.fetchall()
-    """Сохраняем сообщение в историю"""
-    async with aiosqlite.connect(DB_PATH) as db:
-        await db.execute("INSERT INTO chat_history (user_id, role, content) VALUES (?,?,?)", 
-                        (user_id, role, content))
-        # Храним только последние 10 сообщений
-        await db.execute("""
-            DELETE FROM chat_history 
-            WHERE user_id=? AND rowid NOT IN (
-                SELECT rowid FROM chat_history 
-                WHERE user_id=? ORDER BY ts DESC LIMIT 10
-            )
-        """, (user_id, user_id))
-        await db.commit()
-
-async def get_context(user_id: int) -> list:
-    """Получаем контекст диалога"""
-    async with aiosqlite.connect(DB_PATH) as db:
-        async with db.execute(
-            "SELECT role, content FROM chat_history WHERE user_id=? ORDER BY ts ASC", 
-            (user_id,)
-        ) as cur:
-            return [{"role": r, "content": c} async for r, c in cur]

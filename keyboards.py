@@ -21,7 +21,7 @@ TRANSLATIONS = {
         "breathe_fire": "🔥 Огненное дыхание",
         "phone": "📞 Телефон доверия",
         "quick_help": "🧘 Быстрая помощь",
-        "menu": "В меню"
+        "menu": "🔙 В меню"
     },
     "en": {
         "stop_world": "🌑 Stop the World",
@@ -42,13 +42,13 @@ TRANSLATIONS = {
         "breathe_fire": "🔥 Fire breathing",
         "phone": "📞 Helpline",
         "quick_help": "🧘 Quick help",
-        "menu": "To menu"
+        "menu": "🔙 To menu"
     }
 }
 
 def get_language_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🇷🇺 Русский", callback_data="lang_ru")],
+        [InlineKeyboardButton(text="🇷 Русский", callback_data="lang_ru")],
         [InlineKeyboardButton(text="🇬🇧 English", callback_data="lang_en")]
     ])
 

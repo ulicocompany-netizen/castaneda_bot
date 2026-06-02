@@ -3,7 +3,6 @@ import aiosqlite
 DATABASE_URL = "bot.db"
 
 async def init_db():
-    """Инициализация базы данных"""
     async with aiosqlite.connect(DATABASE_URL) as db:
         await db.execute("""
             CREATE TABLE IF NOT EXISTS users (
@@ -37,14 +36,12 @@ async def init_db():
         await db.commit()
 
 async def get_user_lang(user_id: int) -> str:
-    """Получить язык пользователя"""
     async with aiosqlite.connect(DATABASE_URL) as db:
         cursor = await db.execute("SELECT lang FROM users WHERE user_id = ?", (user_id,))
         result = await cursor.fetchone()
         return result[0] if result else "ru"
 
 async def set_user_lang(user_id: int, lang: str):
-    """Установить язык пользователя"""
     async with aiosqlite.connect(DATABASE_URL) as db:
         await db.execute(
             "INSERT OR REPLACE INTO users (user_id, lang) VALUES (?, ?)",
@@ -53,7 +50,6 @@ async def set_user_lang(user_id: int, lang: str):
         await db.commit()
 
 async def save_message(user_id: int, role: str, content: str):
-    """Сохранить сообщение"""
     async with aiosqlite.connect(DATABASE_URL) as db:
         await db.execute(
             "INSERT INTO messages (user_id, role, content) VALUES (?, ?, ?)",
@@ -62,7 +58,6 @@ async def save_message(user_id: int, role: str, content: str):
         await db.commit()
 
 async def get_context(user_id: int, limit: int = 10):
-    """Получить контекст диалога"""
     async with aiosqlite.connect(DATABASE_URL) as db:
         cursor = await db.execute(
             "SELECT role, content FROM messages WHERE user_id = ? ORDER BY timestamp DESC LIMIT ?",
@@ -72,13 +67,11 @@ async def get_context(user_id: int, limit: int = 10):
         return [{"role": msg[0], "content": msg[1]} for msg in reversed(messages)]
 
 async def save_mood(user_id: int, mood: str):
-    """Сохраняет настроение пользователя"""
     async with aiosqlite.connect(DATABASE_URL) as db:
         await db.execute("INSERT INTO moods (user_id, mood) VALUES (?, ?)", (user_id, mood))
         await db.commit()
 
 async def get_mood_stats(user_id: int):
-    """Возвращает статистику настроения"""
     async with aiosqlite.connect(DATABASE_URL) as db:
         cursor = await db.execute(
             "SELECT mood, COUNT(*) as count FROM moods WHERE user_id = ? GROUP BY mood ORDER BY count DESC",

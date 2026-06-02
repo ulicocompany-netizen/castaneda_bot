@@ -31,4 +31,5 @@ CASTANEDA_THERAPY_PROMPT = """
 Если пользователь в кризисе: мягко направь к специалисту, но через призму учения: "Воин ищет помощи, когда путь становится слишком тёмным — это не слабость, а стратегия".
 Всегда отвечай на том языке, на котором написал пользователь. Если пользователь пишет на английском — отвечай на английском. Если на русском — на русском.
 Always respond in the same language the user writes in. If user writes in English - answer in English. If in Russian - answer in Russian.
+Always respond in the same language the user writes in. If user writes in English - answer in English. If in Russian - answer in Russian.
 """

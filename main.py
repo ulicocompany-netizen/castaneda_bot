@@ -81,9 +81,38 @@ async def process_text_message(message: types.Message, text: str):
     user_id = message.from_user.id
     context = await get_context(user_id)
     
-    messages = [{"role": "system", "content": CASTANEDA_THERAPY_PROMPT}]
+    # Получаем язык пользователя из БД
+    user_lang = await get_user_lang(user_id)
+    
+    # Определяем инструкцию по языку
+    lang_instruction = (
+        "ОТВЕЧАЙ СТРОГО НА РУССКОМ ЯЗЫКЕ." if user_lang == "ru" 
+        else "RESPOND STRICTLY IN ENGLISH. Do not use Russian."
+    )
+    
+    # Добавляем инструкцию к промпту
+    system_prompt = CASTANEDA_THERAPY_PROMPT + "\n\n" + lang_instruction
+    
+    messages = [{"role": "system", "content": system_prompt}]
     messages.extend(context)
     messages.append({"role": "user", "content": text})
+    
+    await bot.send_chat_action(message.chat.id, "typing")
+    
+    try:
+        response = await deepseek_client.chat.completions.create(
+            model="deepseek-chat",
+            messages=messages,
+            temperature=0.75,
+            max_tokens=600
+        )
+        reply = response.choices[0].message.content
+        await save_message(user_id, "user", text)
+        await save_message(user_id, "assistant", reply)
+        await message.answer(reply)
+    except Exception as e:
+        await message.answer("🌫 Мир зашумел... Подожди мгновение и попробуй снова.")
+        print(f"DeepSeek Error: {e}")
     
     await bot.send_chat_action(message.chat.id, "typing")
     

@@ -9,8 +9,14 @@ from dotenv import load_dotenv
 from openai import AsyncOpenAI
 
 from prompts import CASTANEDA_THERAPY_PROMPT
-from database import init_db, get_user_lang, set_user_lang, save_message, get_context
-from keyboards import get_language_keyboard, get_main_menu_keyboard
+from database import (
+    init_db, get_user_lang, set_user_lang, 
+    save_message, get_context, save_mood
+)
+from keyboards import (
+    get_language_keyboard, get_main_menu_keyboard, get_mood_keyboard,
+    get_breathing_keyboard, get_emergency_keyboard, get_premium_sessions_keyboard
+)
 from payments import handle_subscribe
 
 load_dotenv()
@@ -53,7 +59,7 @@ def get_time_theme():
         }
     elif 17 <= hour < 22:
         return {
-            "emoji": "",
+            "emoji": "🌆",
             "greeting": "Добрый вечер, странник",
             "description": "Солнце садится. Время размышлений и видения.",
             "color": "🌄",
@@ -93,11 +99,11 @@ async def process_text_message(message: types.Message, text: str):
         await save_message(user_id, "assistant", reply)
         await message.answer(reply)
     except Exception as e:
-        await message.answer("🌫 Мир зашумел... Подожди мгновение и попробуй снова.")
+        await message.answer(" Мир зашумел... Подожди мгновение и попробуй снова.")
         print(f"DeepSeek Error: {e}")
 
 # ============================================
-# 🚀 КОМАНДА /start
+#  КОМАНДА /start
 # ============================================
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
@@ -120,7 +126,11 @@ async def cmd_start(message: types.Message):
         )
     except Exception as e:
         print(f"Photo error: {e}")
-        await message.answer(text, reply_markup=get_language_keyboard(), parse_mode="Markdown")
+        await message.answer(
+            text, 
+            reply_markup=get_language_keyboard(), 
+            parse_mode="Markdown"
+        )
 
 # ============================================
 # 🌐 ВЫБОР ЯЗЫКА
@@ -136,7 +146,7 @@ async def process_language(callback: CallbackQuery):
     
     await callback.message.answer(
         f"✅ Язык установлен: {lang_names.get(lang, lang)}\n\n"
-        f"{theme['emoji']} Теперь используй /menu для выбора практики или просто напиши мне (можно голосом ).",
+        f"{theme['emoji']} Теперь используй /menu для выбора практики или просто напиши мне (можно голосом 🎤).",
         reply_markup=get_main_menu_keyboard()
     )
     await callback.answer()
@@ -154,7 +164,7 @@ async def cmd_menu(message: types.Message):
     )
 
 # ============================================
-# 🎯 ОБРАБОТКА КНОПОК МЕНЮ
+# 🎯 ОБРАБОТКА КНОПОК МЕНЮ (практики)
 # ============================================
 @dp.callback_query(lambda c: c.data.startswith("session_"))
 async def process_session(callback: CallbackQuery):
@@ -165,7 +175,7 @@ async def process_session(callback: CallbackQuery):
         "death": "💀 **Разговор со смертью**\n\nСмерть стоит за твоим левым плечом...\nЧто бы ты сделал иначе, если бы знал, что это последний день?",
         "heart": "❤️ **Путь с сердцем**\n\nЕсть ли радость в том, что ты делаешь?\nИли лишь долг и страх?",
         "dreams": "🦅 **Видение снов**\n\nРасскажи свой сон. Мы посмотрим на него через призму второго внимания.",
-        "intention": " **Намерение**\n\nСформулируй своё намерение. Не цель — а намерение. Почувствуй разницу."
+        "intention": "⚡ **Намерение**\n\nСформулируй своё намерение. Не цель — а намерение. Почувствуй разницу."
     }
     
     text = sessions.get(session_type, "🤔 Выбери практику из меню")
@@ -173,7 +183,7 @@ async def process_session(callback: CallbackQuery):
     await callback.answer()
 
 # ============================================
-#  ОБРАБОТКА ГОЛОСОВЫХ СООБЩЕНИЙ
+# 🎤 ОБРАБОТКА ГОЛОСОВЫХ СООБЩЕНИЙ
 # ============================================
 @dp.message(lambda message: message.voice)
 async def handle_voice(message: types.Message):
@@ -200,20 +210,161 @@ async def handle_voice(message: types.Message):
         recognized_text = transcription.text
         print(f"Распознанный текст: {recognized_text}")
         
-        await message.answer(f"📝 _Распознано: {recognized_text}_", parse_mode="Markdown")
+        await message.answer(
+            f"📝 _Распознано: {recognized_text}_", 
+            parse_mode="Markdown"
+        )
         await process_text_message(message, recognized_text)
         
     except Exception as e:
-        await message.answer("🌫 Голос растворился в ветре. Не удалось распознать. Попробуй ещё раз или напиши текстом.")
+        await message.answer(
+            "🌫 Голос растворился в ветре. Не удалось распознать. Попробуй ещё раз или напиши текстом."
+        )
         print(f"Whisper Error: {e}")
 
 # ============================================
-# 💬 ОБРАБОТКА ОБЫЧНОГО ТЕКСТА
+#  ОБРАБОТКА ОБЫЧНОГО ТЕКСТА
 # ============================================
 @dp.message()
 async def handle_text(message: types.Message):
     if message.text:
         await process_text_message(message, message.text)
+
+# ============================================
+# 😊 ОБРАБОТКА НАСТРОЕНИЯ
+# ============================================
+@dp.callback_query(lambda c: c.data == "mood_check")
+async def mood_check(callback: CallbackQuery):
+    await callback.message.answer(
+        "😊 **Как ты себя чувствуешь?**",
+        reply_markup=get_mood_keyboard(),
+        parse_mode="Markdown"
+    )
+    await callback.answer()
+
+@dp.callback_query(lambda c: c.data.startswith("mood_") and c.data != "mood_check")
+async def mood_select(callback: CallbackQuery):
+    mood = callback.data.replace("mood_", "")
+    user_id = callback.from_user.id
+    
+    await save_mood(user_id, mood)
+    
+    mood_responses = {
+        "good": "😊 Рад, что у тебя всё хорошо! Воин сохраняет ясность в радости.",
+        "ok": "😐 Нормально — это тоже путь. Воин не судит своё состояние.",
+        "bad": "😔 Я слышу тебя. Иногда признать боль — первый шаг к исцелению. Расскажи, что случилось?",
+        "anxiety": "😰 Тревога — это ветер, который пытается сбить тебя с пути. Но воин стоит твёрдо. Давай подышим вместе?"
+    }
+    
+    text = mood_responses.get(mood, "Я понял тебя.")
+    await callback.message.answer(text)
+    await callback.answer()
+
+# ============================================
+# 🧘 ДЫХАТЕЛЬНЫЕ УПРАЖНЕНИЯ
+# ============================================
+@dp.callback_query(lambda c: c.data == "breathing")
+async def breathing_menu(callback: CallbackQuery):
+    await callback.message.answer(
+        "🧘 **Выбери дыхательную практику:**\n\n"
+        "🌊 **4-7-8** — расслабление и сон\n"
+        "🌬️ **Равное дыхание** — баланс и спокойствие\n"
+        "🔥 **Огненное дыхание** — энергия и бодрость",
+        reply_markup=get_breathing_keyboard(),
+        parse_mode="Markdown"
+    )
+    await callback.answer()
+
+@dp.callback_query(lambda c: c.data.startswith("breathe_"))
+async def breathing_exercise(callback: CallbackQuery):
+    exercise = callback.data.replace("breathe_", "")
+    
+    exercises = {
+        "478": (
+            "🌊 **Техника 4-7-8**\n\n"
+            "1. Вдох через нос — **4 секунды**\n"
+            "2. Задержи дыхание — **7 секунд**\n"
+            "3. Выдох через рот — **8 секунд**\n\n"
+            "Повтори 4 раза. Идеально перед сном. 💤"
+        ),
+        "equal": (
+            "🌬️ **Равное дыхание**\n\n"
+            "1. Вдох — **4 секунды**\n"
+            "2. Выдох — **4 секунды**\n\n"
+            "Повтори 5-10 раз. Возвращает в настоящее мгновение. ⚖️"
+        ),
+        "fire": (
+            " **Огненное дыхание**\n\n"
+            "1. Резкий выдох через нос\n"
+            "2. Вдох происходит автоматически\n"
+            "3. Темп: 1-2 цикла в секунду\n\n"
+            "Делай 30 секунд. Даёт мощный прилив энергии! ⚡"
+        )
+    }
+    
+    text = exercises.get(exercise, "Выбери упражнение из меню.")
+    await callback.message.answer(text, parse_mode="Markdown")
+    await callback.answer()
+
+# ============================================
+# 🆘 ЭКСТРЕННАЯ ПОМОЩЬ
+# ============================================
+@dp.callback_query(lambda c: c.data == "emergency")
+async def emergency(callback: CallbackQuery):
+    await callback.message.answer(
+        "🆘 **Ты не один, воин.**\n\n"
+        "📞 **Телефон доверия (Россия):** 8-800-2000-122 (бесплатно)\n\n"
+        "Если тебе сейчас очень плохо — позвони. Это не слабость, это мудрость.\n\n"
+        "🧘 Или попробуй быструю технику самопомощи:",
+        reply_markup=get_emergency_keyboard()
+    )
+    await callback.answer()
+
+@dp.callback_query(lambda c: c.data == "emergency_help")
+async def emergency_help(callback: CallbackQuery):
+    await callback.message.answer(
+        "🧘 **Быстрая техника заземления 5-4-3-2-1:**\n\n"
+        "👀 Назови **5 вещей**, которые ты видишь\n"
+        "👂 **4 звука**, которые слышишь\n"
+        "✋ **3 ощущения** в теле\n"
+        "👃 **2 запаха**\n"
+        "👅 **1 вкус**\n\n"
+        "Это возвращает в настоящее. Ты здесь. Ты в безопасности. 🌿"
+    )
+    await callback.answer()
+
+# ============================================
+# 🔙 НАЗАД В МЕНЮ
+# ============================================
+@dp.callback_query(lambda c: c.data == "main_menu")
+async def back_to_menu(callback: CallbackQuery):
+    theme = get_time_theme()
+    await callback.message.answer(
+        f"{theme['emoji']} **Главное меню:**",
+        reply_markup=get_main_menu_keyboard(),
+        parse_mode="Markdown"
+    )
+    await callback.answer()
+
+# ============================================
+# 💳 ПОДПИСКА
+# ============================================
+@dp.callback_query(lambda c: c.data == "premium_sessions")
+async def process_premium(callback: CallbackQuery):
+    await callback.message.answer(
+        "🔒 **Premium-сессии**\n\n"
+        "🦅 Видение снов\n"
+        "⚡ Намерение\n"
+        "🗺️ Карта пути\n\n"
+        "Доступно по подписке. Оформить?",
+        reply_markup=get_premium_sessions_keyboard(),
+        parse_mode="Markdown"
+    )
+    await callback.answer()
+
+@dp.callback_query(lambda c: c.data == "subscribe")
+async def process_subscribe(callback: CallbackQuery):
+    await handle_subscribe(callback)
 
 # ============================================
 # 🚀 ЗАПУСК БОТА

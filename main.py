@@ -174,9 +174,11 @@ async def process_language(callback: CallbackQuery):
     lang_names = {"ru": "🇷🇺 Русский", "en": "🇬🇧 English"}
     
     await callback.message.answer(
-        f"✅ Язык установлен: {lang_names.get(lang, lang)}\n\n"
-        f"{theme['emoji']} Теперь используй /menu для выбора практики или просто напиши мне (можно голосом 🎤).",
-        reply_markup=get_main_menu_keyboard()
+    f"✅ Язык установлен: {lang_names.get(lang, lang)}\n\n"
+    f"{theme['emoji']} Теперь используй /menu для выбора практики или просто напиши мне (можно голосом 🎤).",
+    reply_markup=get_main_menu_keyboard(lang),  # ← Передаём язык!
+    parse_mode="Markdown"
+)
     )
     await callback.answer()
 

@@ -37,6 +37,24 @@ async def set_user_lang(user_id: int, lang: str):
         await db.commit()
 
 async def save_message(user_id: int, role: str, content: str):
+    async def save_mood(user_id: int, mood: str):
+    """Сохраняет настроение пользователя"""
+    async with aiosqlite.connect(DATABASE_URL) as db:
+        await db.execute(
+            """CREATE TABLE IF NOT EXISTS moods 
+               (user_id INTEGER, mood TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)"""
+        )
+        await db.execute("INSERT INTO moods (user_id, mood) VALUES (?, ?)", (user_id, mood))
+        await db.commit()
+
+async def get_mood_stats(user_id: int):
+    """Возвращает статистику настроения"""
+    async with aiosqlite.connect(DATABASE_URL) as db:
+        cursor = await db.execute(
+            "SELECT mood, COUNT(*) as count FROM moods WHERE user_id = ? GROUP BY mood ORDER BY count DESC",
+            (user_id,)
+        )
+        return await cursor.fetchall()
     """Сохраняем сообщение в историю"""
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute("INSERT INTO chat_history (user_id, role, content) VALUES (?,?,?)", 

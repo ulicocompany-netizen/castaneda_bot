@@ -407,7 +407,7 @@ async def process_consultation_booking(callback: CallbackQuery, consult_type: st
         type_name_ru = "Голосовая консультация (60 мин) — 3000₽"
         type_name_en = "Voice consultation (60 min) — 3000₽"
     
-    YOUR_ID = 123456789  # ← ЗАМЕНИ НА СВОЙ TELEGRAM ID!
+    YOUR_ID = 862373702  # ← ЗАМЕНИ НА СВОЙ TELEGRAM ID!
     
     notification_ru = (
         f"🔔 **НОВАЯ ЗАЯВКА!**\n\n"
@@ -440,7 +440,7 @@ async def process_consultation_booking(callback: CallbackQuery, consult_type: st
         f"✅ **Заявка отправлена!**\n\n"
         f"🪶 Ты выбрал: {type_name_ru}\n\n"
         f"Я свяжусь с тобой в течение 24 часов в Telegram.\n\n"
-        f"Если нужно срочно — напиши мне напрямую: @твой_юзернейм"
+        f"Если нужно срочно — напиши мне напрямую: @Yuli_kor"
     )
     
     text_en = (

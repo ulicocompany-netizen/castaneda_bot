@@ -74,6 +74,24 @@ async def save_mood(user_id: int, mood: str):
 async def get_mood_stats(user_id: int):
     async with aiosqlite.connect(DATABASE_URL) as db:
         cursor = await db.execute(
+            async def get_last_interaction(user_id: int):
+    """Получить время последнего сообщения"""
+    async with aiosqlite.connect(DATABASE_URL) as db:
+        cursor = await db.execute(
+            "SELECT MAX(timestamp) FROM messages WHERE user_id = ?",
+            (user_id,)
+        )
+        result = await cursor.fetchone()
+        return result[0] if result[0] else None
+
+async def update_last_interaction(user_id: int):
+    """Обновить время последнего взаимодействия"""
+    async with aiosqlite.connect(DATABASE_URL) as db:
+        await db.execute(
+            "INSERT OR REPLACE INTO users (user_id, last_seen) VALUES (?, datetime('now'))",
+            (user_id,)
+        )
+        await db.commit()
             "SELECT mood, COUNT(*) as count FROM moods WHERE user_id = ? GROUP BY mood ORDER BY count DESC",
             (user_id,)
         )

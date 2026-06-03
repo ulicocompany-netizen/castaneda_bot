@@ -1,6 +1,5 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-# Словари переводов кнопок
 TRANSLATIONS = {
     "ru": {
         "stop_world": "🌑 Остановить мир",
@@ -10,18 +9,19 @@ TRANSLATIONS = {
         "intention": "⚡ Намерение",
         "mood_check": "😊 Как я себя чувствую?",
         "breathing": "🧘 Дыхание",
-        "emergency": "🆘 Мне плохо",
+        "emergency": "👤 Консультация",
         "good": "😊 Хорошо",
         "ok": "😐 Нормально",
         "bad": "😔 Плохо",
         "anxiety": "😰 Тревожно",
         "back": "🔙 Назад",
         "breathe_478": "🌊 4-7-8 (расслабление)",
-        "breathe_equal": "🌬️ Равное дыхание",
+        "breathe_equal": "️🌬️ Равное дыхание",
         "breathe_fire": "🔥 Огненное дыхание",
-        "phone": "📞 Телефон доверия",
-        "quick_help": "🧘 Быстрая помощь",
-        "menu": "🔙 В меню"
+        "menu": "🔙 В меню",
+        "text_consult": "💬 Текстовая (30 мин) — 1500₽",
+        "voice_consult": "️🎙️ Голосовая (60 мин) — 3000₽",
+        "consult_info": "ℹ️ Как это работает"
     },
     "en": {
         "stop_world": "🌑 Stop the World",
@@ -31,7 +31,7 @@ TRANSLATIONS = {
         "intention": "⚡ Intention",
         "mood_check": "😊 How do I feel?",
         "breathing": "🧘 Breathing",
-        "emergency": "🆘 I feel bad",
+        "emergency": "👤 Consultation",
         "good": "😊 Good",
         "ok": "😐 Okay",
         "bad": "😔 Bad",
@@ -40,15 +40,16 @@ TRANSLATIONS = {
         "breathe_478": "🌊 4-7-8 (relaxation)",
         "breathe_equal": "🌬️ Equal breathing",
         "breathe_fire": "🔥 Fire breathing",
-        "phone": "📞 Helpline",
-        "quick_help": "🧘 Quick help",
-        "menu": "🔙 To menu"
+        "menu": "🔙 To menu",
+        "text_consult": "💬 Text (30 min) — 1500₽",
+        "voice_consult": "🎙️ Voice (60 min) — 3000₽",
+        "consult_info": "ℹ️ How it works"
     }
 }
 
 def get_language_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🇷 Русский", callback_data="lang_ru")],
+        [InlineKeyboardButton(text="🇷🇺 Русский", callback_data="lang_ru")],
         [InlineKeyboardButton(text="🇬🇧 English", callback_data="lang_en")]
     ])
 
@@ -62,7 +63,7 @@ def get_main_menu_keyboard(lang: str = "ru"):
         [InlineKeyboardButton(text=t["intention"], callback_data="session_intention")],
         [InlineKeyboardButton(text=t["mood_check"], callback_data="mood_check")],
         [InlineKeyboardButton(text=t["breathing"], callback_data="breathing")],
-        [InlineKeyboardButton(text=t["emergency"], callback_data="emergency")]
+        [InlineKeyboardButton(text=t["emergency"], callback_data="consultation")]
     ])
 
 def get_mood_keyboard(lang: str = "ru"):
@@ -84,12 +85,13 @@ def get_breathing_keyboard(lang: str = "ru"):
         [InlineKeyboardButton(text=t["back"], callback_data="main_menu")]
     ])
 
-def get_emergency_keyboard(lang: str = "ru"):
+def get_consultation_keyboard(lang: str = "ru"):
     t = TRANSLATIONS.get(lang, TRANSLATIONS["ru"])
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=t["phone"], url="tel:88002000122")],
-        [InlineKeyboardButton(text=t["quick_help"], callback_data="emergency_help")],
-        [InlineKeyboardButton(text=t["menu"], callback_data="main_menu")]
+        [InlineKeyboardButton(text=t["text_consult"], callback_data="consult_text")],
+        [InlineKeyboardButton(text=t["voice_consult"], callback_data="consult_voice")],
+        [InlineKeyboardButton(text=t["consult_info"], callback_data="consult_info")],
+        [InlineKeyboardButton(text=t["back"], callback_data="main_menu")]
     ])
 
 def get_premium_sessions_keyboard(lang: str = "ru"):

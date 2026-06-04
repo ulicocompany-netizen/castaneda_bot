@@ -36,7 +36,14 @@ openai_client = AsyncOpenAI(
 )
 
 def get_time_theme():
-    hour = datetime.now().hour
+    # Используем московское время (UTC+3)
+    from datetime import timezone, timedelta
+    
+    utc_now = datetime.now(timezone.utc)
+    moscow_tz = timezone(timedelta(hours=3))
+    moscow_time = utc_now.astimezone(moscow_tz)
+    
+    hour = moscow_time.hour
     
     if 6 <= hour < 12:
         return {
@@ -44,7 +51,7 @@ def get_time_theme():
             "greeting": "Доброе утро, воин",
             "description": "Солнце встаёт из-за горизонта. Новый день — новые возможности.",
             "color": "🌅",
-            "photo_url": "https://i.ibb.co/wFdsNJgm/image.jpg"
+            "photo_url": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800"
         }
     elif 12 <= hour < 17:
         return {
@@ -52,7 +59,7 @@ def get_time_theme():
             "greeting": "Добрый день, путник",
             "description": "Солнце в зените. Время действия и силы.",
             "color": "☀️",
-            "photo_url": "https://i.ibb.co/xK5b1SKR/1.jpg"
+            "photo_url": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800"
         }
     elif 17 <= hour < 22:
         return {
@@ -60,7 +67,7 @@ def get_time_theme():
             "greeting": "Добрый вечер, странник",
             "description": "Солнце садится. Время размышлений и видения.",
             "color": "🌄",
-            "photo_url": "https://i.ibb.co/fzCjhYXR/image.jpg"
+            "photo_url": "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=800"
         }
     else:
         return {
@@ -68,7 +75,7 @@ def get_time_theme():
             "greeting": "Доброй ночи, видящий",
             "description": "Ночь наступила. Время снов и второго внимания.",
             "color": "✨",
-            "photo_url": "https://i.ibb.co/MDS0D0Lv/image.jpg"
+            "photo_url": "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800"
         }
 
 async def process_text_message(message: types.Message, text: str):

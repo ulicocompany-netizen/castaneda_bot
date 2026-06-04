@@ -46,36 +46,40 @@ def get_time_theme():
     hour = moscow_time.hour
     
     if 6 <= hour < 12:
+        # ☀️ УТРО
         return {
             "emoji": "☀️",
             "greeting": "Доброе утро, воин",
             "description": "Солнце встаёт из-за горизонта. Новый день — новые возможности.",
             "color": "🌅",
-            "photo_url": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800"
+            "photo_url": "https://raw.githubusercontent.com/ulicocompany-netizen/castaneda_bot/main/images/утро.jpeg"
         }
     elif 12 <= hour < 17:
+        # 🌤️ ДЕНЬ
         return {
             "emoji": "🌤️",
             "greeting": "Добрый день, путник",
             "description": "Солнце в зените. Время действия и силы.",
             "color": "☀️",
-            "photo_url": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800"
+            "photo_url": "https://raw.githubusercontent.com/ulicocompany-netizen/castaneda_bot/main/images/день1.jpeg"
         }
     elif 17 <= hour < 22:
+        # 🌆 ВЕЧЕР (СУМЕРКИ)
         return {
             "emoji": "🌆",
             "greeting": "Добрый вечер, странник",
             "description": "Солнце садится. Время размышлений и видения.",
             "color": "🌄",
-            "photo_url": "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=800"
+            "photo_url": "https://raw.githubusercontent.com/ulicocompany-netizen/castaneda_bot/main/images/сумерки.jpeg"
         }
     else:
+        # 🌙 НОЧЬ
         return {
             "emoji": "🌙",
             "greeting": "Доброй ночи, видящий",
             "description": "Ночь наступила. Время снов и второго внимания.",
             "color": "✨",
-            "photo_url": "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800"
+            "photo_url": "https://raw.githubusercontent.com/ulicocompany-netizen/castaneda_bot/main/images/ночь.jpeg"
         }
 
 async def process_text_message(message: types.Message, text: str):

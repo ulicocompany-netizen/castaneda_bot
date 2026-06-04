@@ -209,10 +209,10 @@ async def process_session(callback: CallbackQuery):
 @dp.message(lambda message: message.voice)
 async def handle_voice(message: types.Message):
     if not os.getenv("OPENAI_API_KEY"):
-        await message.answer("🔇 Voice recognition unavailable. Please type.")
+        await message.answer("🔇 Распознавание голоса недоступно. Напиши текстом.")
         return
 
-    await message.answer("🎤 Listening...")
+    await message.answer("🎤 Слушаю тебя, воин...")
     
     try:
         file_info = await bot.get_file(message.voice.file_id)
@@ -220,23 +220,36 @@ async def handle_voice(message: types.Message):
         response = requests.get(file_url)
         
         if response.status_code != 200:
-            raise Exception("Failed to download voice file")
+            raise Exception(f"Failed to download voice file: {response.status_code}")
 
+        # Распознаём с автоматическим определением языка
         transcription = await openai_client.audio.transcriptions.create(
             model="whisper-1",
             file=("voice.ogg", response.content, "audio/ogg"),
-            language="ru"
+            language="ru"  # Принудительно русский
         )
         
-        recognized_text = transcription.text
-        print(f"Recognized text: {recognized_text}")
+        recognized_text = transcription.text.strip()
         
-        await message.answer(f"📝 _Recognized: {recognized_text}_", parse_mode="Markdown")
+        if not recognized_text:
+            await message.answer("🌫 Голос слишком тихий или короткий. Попробуй ещё раз или напиши текстом.")
+            return
+        
+        print(f"✅ Распознанный текст: {recognized_text}")
+        
+        await message.answer(f"📝 _Распознано: {recognized_text}_", parse_mode="Markdown")
         await process_text_message(message, recognized_text)
         
     except Exception as e:
-        await message.answer("🌫 Voice dissolved in the wind. Couldn't recognize. Try again or type.")
-        print(f"Whisper Error: {e}")
+        error_msg = str(e)
+        print(f"❌ Whisper Error: {error_msg}")
+        
+        if "authentication" in error_msg.lower():
+            await message.answer("🔑 Ошибка API ключа OpenAI. Проверь переменную OPENAI_API_KEY.")
+        elif "too short" in error_msg.lower():
+            await message.answer("⏱ Голосовое сообщение слишком короткое. Говори хотя бы 5 секунд.")
+        else:
+            await message.answer("🌫 Голос растворился в ветре. Не удалось распознать. Попробуй ещё раз или напиши текстом.")
 
 @dp.message()
 async def handle_text(message: types.Message):

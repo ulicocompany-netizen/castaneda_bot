@@ -871,7 +871,7 @@ async def subscribe_choose(callback: CallbackQuery):
         f"Ты выбрал: **{plan_info['name_ru']}** ({plan_info['days']} дней)\n"
         f"💰 Сумма: **{plan_info['price']}₽**\n\n"
         f"💳 **Реквизиты для оплаты:**\n"
-        f"🏦 Сбербанк: 2202 2050 7295 0447\n"
+        f"🏦 Тинькофф: 5534 2000 5167 0180\n"
         f"👤 Получатель: Корытцына Ю.А.\n\n"
         f"После оплаты нажми кнопку ниже — я проверю и активирую подписку."
     )
@@ -881,7 +881,7 @@ async def subscribe_choose(callback: CallbackQuery):
         f"You chose: **{plan_info['name_en']}** ({plan_info['days']} days)\n"
         f"💰 Amount: **{plan_info['price']}₽**\n\n"
         f"💳 **Payment details:**\n"
-        f"🏦 Sberbank: 2202 2050 7295 0447\n"
+        f"🏦 Тинькофф: 5534 2000 5167 0180\n"
         f"👤 Recipient: Koritsyna Y.A.\n\n"
         f"After payment, click the button below — I'll check and activate subscription."
     )

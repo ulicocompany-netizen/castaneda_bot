@@ -8,24 +8,33 @@ TRANSLATIONS = {
         "dreams": "🦅 Видение снов",
         "intention": "⚡ Намерение",
         "mood_check": "😊 Как я себя чувствую?",
-        "breathing": "🧘 Дыхание",
+        "breathing": " Дыхание",
         "emergency": "👤 Консультация",
         "good": "😊 Хорошо",
-        "ok": "😐 Нормально",
-        "bad": "😔 Плохо",
-        "anxiety": "😰 Тревожно",
-        "back": "🔙 Назад",
+        "ok": " Нормально",
+        "bad": " Плохо",
+        "anxiety": " Тревожно",
+        "back": " Назад",
         "breathe_478": "🌊 4-7-8 (расслабление)",
-        "breathe_equal": "️🌬️ Равное дыхание",
+        "breathe_equal": "🌬️ Равное дыхание",
         "breathe_fire": "🔥 Огненное дыхание",
         "menu": "🔙 В меню",
         "text_consult": "💬 Текстовая (30 мин) — 1500₽",
-        "voice_consult": "️🎙️ Голосовая (60 мин) — 3000₽",
-        "consult_info": "ℹ️ Как это работает"
+        "voice_consult": "🎙️ Голосовая (60 мин) — 3000₽",
+        "consult_info": "️ Как это работает",
+        "documents": "📜 Свитки Пути",
+        "privacy": "🔒 Свиток Тайны",
+        "terms": "📋 Кодекс Воина",
+        "offer": "📜 Договор с Орлом",
+        "age_confirm": "🦅 Я готов переступить порог",
+        "age_deny": " Я ещё не готов",
+        "subscribe_btn": "🌟 Оформить подписку",
+        "my_sub": "📱 Моя подписка",
+        "delete_data": "🗑 Стереть мой след"
     },
     "en": {
-        "stop_world": "🌑 Stop the World",
-        "death": "💀 Talk with Death",
+        "stop_world": " Stop the World",
+        "death": " Talk with Death",
         "heart": "❤️ Path with Heart",
         "dreams": "🦅 Dreaming",
         "intention": "⚡ Intention",
@@ -34,7 +43,7 @@ TRANSLATIONS = {
         "emergency": "👤 Consultation",
         "good": "😊 Good",
         "ok": "😐 Okay",
-        "bad": "😔 Bad",
+        "bad": " Bad",
         "anxiety": "😰 Anxious",
         "back": "🔙 Back",
         "breathe_478": "🌊 4-7-8 (relaxation)",
@@ -43,7 +52,16 @@ TRANSLATIONS = {
         "menu": "🔙 To menu",
         "text_consult": "💬 Text (30 min) — 1500₽",
         "voice_consult": "🎙️ Voice (60 min) — 3000₽",
-        "consult_info": "ℹ️ How it works"
+        "consult_info": "ℹ️ How it works",
+        "documents": "📜 Path Scrolls",
+        "privacy": "🔒 Scroll of Secrecy",
+        "terms": "📋 Warrior's Code",
+        "offer": "📜 Pact with the Eagle",
+        "age_confirm": "🦅 I'm ready to cross the threshold",
+        "age_deny": "🌱 I'm not ready yet",
+        "subscribe_btn": "🌟 Subscribe",
+        "my_sub": "📱 My subscription",
+        "delete_data": "🗑 Erase my trace"
     }
 }
 
@@ -63,7 +81,8 @@ def get_main_menu_keyboard(lang: str = "ru"):
         [InlineKeyboardButton(text=t["intention"], callback_data="session_intention")],
         [InlineKeyboardButton(text=t["mood_check"], callback_data="mood_check")],
         [InlineKeyboardButton(text=t["breathing"], callback_data="breathing")],
-        [InlineKeyboardButton(text=t["emergency"], callback_data="consultation")]
+        [InlineKeyboardButton(text=t["emergency"], callback_data="consultation")],
+        [InlineKeyboardButton(text=t["documents"], callback_data="documents_menu")]
     ])
 
 def get_mood_keyboard(lang: str = "ru"):
@@ -92,6 +111,22 @@ def get_consultation_keyboard(lang: str = "ru"):
         [InlineKeyboardButton(text=t["voice_consult"], callback_data="consult_voice")],
         [InlineKeyboardButton(text=t["consult_info"], callback_data="consult_info")],
         [InlineKeyboardButton(text=t["back"], callback_data="main_menu")]
+    ])
+
+def get_documents_keyboard(lang: str = "ru"):
+    t = TRANSLATIONS.get(lang, TRANSLATIONS["ru"])
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=t["privacy"], callback_data="doc_privacy")],
+        [InlineKeyboardButton(text=t["terms"], callback_data="doc_terms")],
+        [InlineKeyboardButton(text=t["offer"], callback_data="doc_offer")],
+        [InlineKeyboardButton(text=t["back"], callback_data="main_menu")]
+    ])
+
+def get_age_keyboard(lang: str = "ru"):
+    t = TRANSLATIONS.get(lang, TRANSLATIONS["ru"])
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=t["age_confirm"], callback_data="age_yes")],
+        [InlineKeyboardButton(text=t["age_deny"], callback_data="age_no")]
     ])
 
 def get_premium_sessions_keyboard(lang: str = "ru"):

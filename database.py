@@ -1,4 +1,5 @@
 import aiosqlite
+from datetime import datetime, timedelta
 
 DATABASE_URL = "bot.db"
 
@@ -8,6 +9,11 @@ async def init_db():
             CREATE TABLE IF NOT EXISTS users (
                 user_id INTEGER PRIMARY KEY,
                 lang TEXT DEFAULT 'ru',
+                subscription_end DATETIME,
+                last_seen DATETIME,
+                last_reminder DATETIME,
+                messages_today INTEGER DEFAULT 0,
+                last_message_date TEXT,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -91,7 +97,121 @@ async def get_last_interaction(user_id: int):
 async def update_last_interaction(user_id: int):
     async with aiosqlite.connect(DATABASE_URL) as db:
         await db.execute(
-            "INSERT OR REPLACE INTO users (user_id) VALUES (?)",
+            "INSERT OR REPLACE INTO users (user_id, last_seen) VALUES (?, datetime('now'))",
             (user_id,)
         )
+        await db.commit()
+
+# ============================================
+# 💳 ПОДПИСКА
+# ============================================
+
+async def get_subscription_status(user_id: int):
+    async with aiosqlite.connect(DATABASE_URL) as db:
+        cursor = await db.execute(
+            "SELECT subscription_end FROM users WHERE user_id = ?",
+            (user_id,)
+        )
+        result = await cursor.fetchone()
+        return result[0] if result else None
+
+async def set_subscription(user_id: int, days: int = 30):
+    end_date = datetime.now() + timedelta(days=days)
+    async with aiosqlite.connect(DATABASE_URL) as db:
+        await db.execute(
+            "UPDATE users SET subscription_end = ? WHERE user_id = ?",
+            (end_date.isoformat(), user_id)
+        )
+        await db.commit()
+
+async def is_subscribed(user_id: int) -> bool:
+    sub_end = await get_subscription_status(user_id)
+    if not sub_end:
+        return False
+    try:
+        end_date = datetime.fromisoformat(sub_end)
+        return datetime.now() < end_date
+    except:
+        return False
+
+async def get_users_without_subscription():
+    async with aiosqlite.connect(DATABASE_URL) as db:
+        cursor = await db.execute("""
+            SELECT user_id, last_seen FROM users 
+            WHERE subscription_end IS NULL OR subscription_end < ?
+        """, (datetime.now().isoformat(),))
+        return await cursor.fetchall()
+
+# ============================================
+# 📮 НАПОМИНАНИЯ
+# ============================================
+
+async def update_last_reminder(user_id: int):
+    async with aiosqlite.connect(DATABASE_URL) as db:
+        await db.execute(
+            "UPDATE users SET last_reminder = ? WHERE user_id = ?",
+            (datetime.now().isoformat(), user_id)
+        )
+        await db.commit()
+
+async def get_last_reminder(user_id: int):
+    async with aiosqlite.connect(DATABASE_URL) as db:
+        cursor = await db.execute(
+            "SELECT last_reminder FROM users WHERE user_id = ?",
+            (user_id,)
+        )
+        result = await cursor.fetchone()
+        return result[0] if result else None
+
+# ============================================
+# 🚧 ЛИМИТЫ СООБЩЕНИЙ
+# ============================================
+
+async def get_messages_today(user_id: int) -> int:
+    async with aiosqlite.connect(DATABASE_URL) as db:
+        cursor = await db.execute(
+            "SELECT messages_today, last_message_date FROM users WHERE user_id = ?",
+            (user_id,)
+        )
+        result = await cursor.fetchone()
+        if not result:
+            return 0
+        
+        messages_count, last_date = result
+        today = datetime.now().strftime("%Y-%m-%d")
+        
+        if last_date != today:
+            return 0
+        return messages_count or 0
+
+async def increment_messages_today(user_id: int):
+    today = datetime.now().strftime("%Y-%m-%d")
+    async with aiosqlite.connect(DATABASE_URL) as db:
+        cursor = await db.execute(
+            "SELECT last_message_date FROM users WHERE user_id = ?",
+            (user_id,)
+        )
+        result = await cursor.fetchone()
+        
+        if not result or result[0] != today:
+            await db.execute(
+                "UPDATE users SET messages_today = 1, last_message_date = ? WHERE user_id = ?",
+                (today, user_id)
+            )
+        else:
+            await db.execute(
+                "UPDATE users SET messages_today = messages_today + 1 WHERE user_id = ?",
+                (user_id,)
+            )
+        await db.commit()
+
+# ============================================
+# 🗑️ УДАЛЕНИЕ ДАННЫХ
+# ============================================
+
+async def delete_user_data(user_id: int):
+    async with aiosqlite.connect(DATABASE_URL) as db:
+        await db.execute("DELETE FROM messages WHERE user_id = ?", (user_id,))
+        await db.execute("DELETE FROM moods WHERE user_id = ?", (user_id,))
+        await db.execute("DELETE FROM users WHERE user_id = ?", (user_id,))
         await db.commit()

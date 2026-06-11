@@ -2,192 +2,204 @@
 # ИП Корытцына Юлия Александровна, ИНН 471303791704, ОГРНИП 322784700197941
 
 POLICY_RU = """
- **ПОЛИТИКА КОНФИДЕНЦИАЛЬНОСТИ**
+🔒 **СВИТОК ТАЙНЫ**
+(Политика конфиденциальности)
 
-**1. Общие положения**
-Настоящая Политика регулирует обработку персональных данных пользователей бота "Путь воина" (@Ulico_bot). Оператор персональных данных — ИП Корытцына Юлия Александровна, ИНН 471303791704, ОГРНИП 322784700197941.
+*«Воин хранит тайны. То, что сказано на пути, остаётся на пути.»*
 
-**2. Какие данные мы собираем:**
-• Telegram ID (идентификатор пользователя)
-• Имя и username из профиля Telegram
-• Выбранный язык общения
-• Историю переписки с ботом
+**1. Кто хранит твои тайны**
+Оператор данных — ИП Корытцына Юлия Александровна, ИНН 471303791704, ОГРНИП 322784700197941.
+
+**2. Что мы знаем о тебе**
+• Твой Telegram ID (твой след в цифровом мире)
+• Имя и username из профиля
+• Выбранный язык пути
+• Историю твоих диалогов с ботом
 • Данные о настроении (для статистики)
 
-**3. Как мы используем данные:**
-• Для функционирования бота
-• Для сохранения контекста диалога
-• Для улучшения качества сервиса
-• НЕ передаём третьим лицам
-• НЕ используем для рекламы
+**3. Как мы используем эти знания**
+• Чтобы бот мог говорить с тобой
+• Чтобы помнить контекст вашего разговора
+• Чтобы улучшать путь
+• **НЕ передаём** третьим лицам
+• **НЕ используем** для рекламы
 
-**4. Хранение данных:**
-Данные хранятся на защищённых серверах в течение срока использования бота.
+**4. Хранение**
+Твои данные хранятся на защищённых серверах, пока ты идёшь путём.
 
-**5. Удаление данных:**
-Вы можете запросить удаление всех ваших данных командой /delete_data. Мы удалим данные в течение 24 часов.
+**5. Право на забвение**
+Ты можешь стереть свой след командой /delete_data. Мы удалим всё в течение 24 часов.
 
-**6. Контакты:**
-По всем вопросам: koritzina@mail.ru
-ИП Корытцына Юлия Александровна, ИНН 471303791704, ОГРНИП 322784700197941
+**6. Связь с хранителем**
+koritzina@mail.ru
+ИП Корытцына Юлия Александровна
 """
 
 TERMS_RU = """
-📋 **ПОЛЬЗОВАТЕЛЬСКОЕ СОГЛАШЕНИЕ**
+📋 **КОДЕКС ВОИНА**
+(Пользовательское соглашение)
 
-**1. Общие положения**
-Используя бота "Путь воина", вы подтверждаете, что вам исполнилось **18 лет** и вы согласны с условиями.
+*«Воин знает правила пути. Он принимает их свободно, без принуждения.»*
 
-**2. Описание сервиса:**
-Бот предоставляет:
-• Психологическую поддержку в стиле учений Кастанеды
+**1. Порог входа**
+Переступая порог этого бота, ты подтверждаешь, что тебе исполнилось **18 лет**. Путь воина — не для детей. Он требует зрелости.
+
+**2. Что даёт путь**
+• Психологическую поддержку в духе учений Кастанеды
 • Дыхательные и медитативные практики
 • Личные консультации (платно)
 • Премиум-подписку (платно)
 
-**3. Важные ограничения:**
-⚠️ Бот **НЕ является заменой** профессиональной психотерапии или медицинской помощи.
-⚠️ При серьёзных психических расстройствах обратитесь к специалисту.
-⚠️ В экстренных ситуациях звоните: 8-800-2000-122.
+**3. Важные предупреждения**
+️ Этот бот — **не замена** психотерапевту или врачу.
+⚠️ При серьёзных расстройствах — ищи специалиста.
+⚠️ В экстренных случаях: 8-800-2000-122.
 
-**4. Ответственность:**
-Пользователь несёт полную ответственность за применение полученных рекомендаций.
+**4. Ответственность воина**
+Ты сам несёшь ответственность за то, как применяешь полученные знания. Воин не перекладывает вину.
 
-**5. Запрещено:**
-• Использовать бота в незаконных целях
-• Передавать доступ третьим лицам
-• Копировать и распространять контент
+**5. Запреты пути**
+• Использовать путь во зло
+• Передавать доступ посторонним
+• Копировать и распространять учение
 
-**6. Изменение условий:**
-Администрация оставляет за собой право изменять условия с уведомлением пользователей.
+**6. Изменение кодекса**
+Хранитель пути может менять правила, уведомив идущих.
 
-**7. Контакты:**
-ИП Корытцына Юлия Александровна, ИНН 471303791704, ОГРНИП 322784700197941
+**7. Связь**
+ИП Корытцына Юлия Александровна, ИНН 471303791704
 Email: koritzina@mail.ru
 """
 
 OFFER_RU = """
-📜 **ПУБЛИЧНАЯ ОФЕРТА**
-на оказание услуг по подписке на бота "Путь воина" (@Ulico_bot)
+📜 **ДОГОВОР С ОРЛОМ**
+(Публичная оферта на подписку)
 
-ИП Корытцына Юлия Александровна, ИНН 471303791704, ОГРНИП 322784700197941, именуемое "Исполнитель", предлагает услуги по подписке на бота "Путь воина".
+*«Орёл даёт силу тем, кто принимает его условия. Без торга, без сомнений.»*
 
-**1. Предмет оферты:**
-Предоставление доступа к премиум-функциям бота на выбранный период.
+ИП Корытцына Юлия Александровна, ИНН 471303791704, ОГРНИП 322784700197941, предлагает доступ к премиум-практикам бота "Путь воина".
 
-**2. Тарифы:**
-• 1 месяц — 990₽
-• 3 месяца — 2490₽
-• 6 месяцев — 3990₽
+**1. Суть договора**
+Ты получаешь доступ к скрытым практикам на выбранный срок.
 
-**3. Порядок оплаты:**
-Оплата производится через Telegram Payments или переводом по реквизитам. Подписка активируется автоматически после оплаты.
+**2. Цена пути**
+• 1 луна (месяц) — 990₽
+• 3 луны — 2490₽
+• 6 лун — 3990₽
 
-**4. Возврат средств:**
-⚠️ **Возврат средств не производится** после активации подписки, так как услуга считается оказанной с момента предоставления доступа к цифровому контенту.
+**3. Как платить**
+Через Telegram Payments или переводом. Доступ открывается сразу после оплаты.
 
-**5. Срок действия:**
-Подписка действует с момента оплаты до окончания выбранного периода.
+**4. Возврат**
+⚠️ **Возврата нет.** Как только ты получил доступ к цифровому знанию — услуга считается оказанной. Воин знает, на что идёт.
 
-**6. Реквизиты Исполнителя:**
+**5. Срок**
+Подписка действует с момента оплаты до конца выбранного периода.
+
+**6. Реквизиты хранителя**
 ИП Корытцына Юлия Александровна
 ИНН: 471303791704
 ОГРНИП: 322784700197941
-Адрес: Санкт-Петербург, поселок Шушары
+Адрес: Санкт-Петербург, пос. Шушары
 Email: koritzina@mail.ru
 
-**7. Акцепт оферты:**
-Использование бота и оплата подписки означают полное согласие с условиями настоящей оферты.
+**7. Акцепт**
+Используя бота и оплачивая подписку, ты принимаешь условия договора.
 """
 
 POLICY_EN = """
-🔒 **PRIVACY POLICY**
+ **SCROLL OF SECRECY**
+(Privacy Policy)
 
-**1. General provisions**
-This Policy regulates the processing of personal data of "Path of the Warrior" bot users (@Ulico_bot).
+*"The warrior keeps secrets. What is said on the path, stays on the path."*
 
-**2. What data we collect:**
-• Telegram ID
-• Name and username from Telegram profile
+**1. Who guards your secrets**
+Operator: IE Koritsyna Yulia Alexandrovna, TIN 471303791704.
+
+**2. What we know about you**
+• Your Telegram ID
+• Name and username
 • Selected language
-• Chat history with the bot
-• Mood data (for statistics)
+• Chat history
+• Mood data
 
-**3. How we use data:**
+**3. How we use this knowledge**
 • For bot functionality
 • For preserving dialogue context
 • For service improvement
 • We do NOT share with third parties
 • We do NOT use for advertising
 
-**4. Data storage:**
-Data is stored on secure servers for the duration of bot usage.
+**4. Storage**
+Your data is stored on secure servers while you walk the path.
 
-**5. Data deletion:**
-You can request deletion of all your data via /delete_data command.
+**5. Right to be forgotten**
+You can erase your trace via /delete_data command.
 
-**6. Contacts:**
-For questions: koritzina@mail.ru
-IE Koritsyna Yulia Alexandrovna, TIN 471303791704
+**6. Contact the guardian**
+koritzina@mail.ru
 """
 
 TERMS_EN = """
-📋 **TERMS OF SERVICE**
+📋 **WARRIOR'S CODE**
+(Terms of Service)
 
-**1. General provisions**
-By using "Path of the Warrior" bot, you confirm that you are **18 years or older** and agree to the terms.
+*"The warrior knows the rules of the path. He accepts them freely, without coercion."*
 
-**2. Service description:**
-The bot provides:
-• Psychological support in Castaneda's style
+**1. The threshold**
+By entering this bot, you confirm you are **18 years or older**. The warrior's path is not for children. It requires maturity.
+
+**2. What the path offers**
+• Psychological support in Castaneda's spirit
 • Breathing and meditative practices
 • Personal consultations (paid)
 • Premium subscription (paid)
 
-**3. Important limitations:**
-⚠️ The bot is **NOT a replacement** for professional psychotherapy or medical help.
-⚠️ For serious mental disorders, consult a specialist.
-⚠️ In emergencies call: 8-800-2000-122.
+**3. Important warnings**
+️ This bot is **NOT a replacement** for a therapist or doctor.
+⚠️ For serious disorders — seek a specialist.
+⚠️ In emergencies: 8-800-2000-122.
 
-**4. Responsibility:**
-The user bears full responsibility for applying received recommendations.
+**4. Warrior's responsibility**
+You bear full responsibility for how you apply the knowledge received.
 
-**5. Prohibited:**
-• Using the bot for illegal purposes
-• Sharing access with third parties
-• Copying and distributing content
+**5. Path prohibitions**
+• Using the path for evil
+• Sharing access with others
+• Copying and distributing the teaching
 """
 
 OFFER_EN = """
-📜 **PUBLIC OFFER**
-for subscription services to "Path of the Warrior" bot (@Ulico_bot)
+📜 **PACT WITH THE EAGLE**
+(Public Offer for Subscription)
 
-IE Koritsyna Yulia Alexandrovna, TIN 471303791704, OGRNIP 322784700197941, hereinafter "Service Provider", offers subscription services.
+*"The Eagle grants power to those who accept its conditions. Without bargaining, without doubt."*
 
-**1. Subject of the offer:**
-Providing access to premium bot features for the selected period.
+IE Koritsyna Yulia Alexandrovna, TIN 471303791704, OGRNIP 322784700197941, offers access to premium practices.
 
-**2. Pricing:**
-• 1 month — 990₽
-• 3 months — 2490₽
-• 6 months — 3990₽
+**1. Essence of the pact**
+You receive access to hidden practices for the chosen period.
 
-**3. Payment procedure:**
-Payment is made via Telegram Payments or bank transfer. Subscription activates automatically after payment.
+**2. Price of the path**
+• 1 moon (month) — 990₽
+• 3 moons — 2490₽
+• 6 moons — 3990₽
 
-**4. Refunds:**
-⚠️ **No refunds** after subscription activation, as the service is considered rendered upon access to digital content.
+**3. How to pay**
+Via Telegram Payments or bank transfer. Access opens immediately after payment.
 
-**5. Validity period:**
-Subscription is valid from payment until the end of the selected period.
+**4. Refunds**
+⚠️ **No refunds.** Once you receive access to digital knowledge — the service is rendered. The warrior knows what he undertakes.
 
-**6. Provider details:**
+**5. Duration**
+Subscription is valid from payment until the end of the chosen period.
+
+**6. Guardian's details**
 IE Koritsyna Yulia Alexandrovna
 TIN: 471303791704
 OGRNIP: 322784700197941
-Address: Saint Petersburg, Shushary settlement
 Email: koritzina@mail.ru
 
-**7. Acceptance:**
-Using the bot and paying for subscription means full agreement with these terms.
+**7. Acceptance**
+Using the bot and paying for subscription means you accept the pact's conditions.
 """

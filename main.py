@@ -398,8 +398,8 @@ async def handle_voice(message: types.Message):
 
 @dp.message()
 async def handle_text(message: types.Message):
-    # ВАЖНО: Игнорируем ВСЕ команды
-    if message.text and (message.text.startswith('/') or message.text in ['/privacy', '/terms', '/offer', '/start', '/menu', '/subscribe', '/my_subscription']):
+    # ВАЖНО: Если это команда - игнорируем, пусть обработают другие хендлеры
+    if message.text and message.text.startswith('/'):
         return
     
     if not message.text:
@@ -415,7 +415,7 @@ async def handle_text(message: types.Message):
         user_lang = await get_user_lang(user_id)
         
         text_ru = (
-            "🦅 **ПЕРЕСТУПИТЬ ПОРОГ**\n\n"
+            " **ПЕРЕСТУПИТЬ ПОРОГ**\n\n"
             "Путь воина — не для детей.\n"
             "⚠️ Этот путь — для тех, кому есть 18.\n\n"
             "**Готов ли ты переступить порог?**"

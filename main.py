@@ -398,11 +398,16 @@ async def handle_voice(message: types.Message):
 
 @dp.message()
 async def handle_text(message: types.Message):
+    # ВАЖНО: Игнорируем ВСЕ команды
+    if message.text and (message.text.startswith('/') or message.text in ['/privacy', '/terms', '/offer', '/start', '/menu', '/subscribe', '/my_subscription']):
+        return
+    
     if not message.text:
         return
     
     user_id = message.from_user.id
     
+    # Проверяем возраст
     context = await get_context(user_id)
     age_confirmed = any(msg["content"] == "age_confirmed" for msg in context if msg["role"] == "system")
     
@@ -426,49 +431,15 @@ async def handle_text(message: types.Message):
         await message.answer(text, reply_markup=get_age_keyboard(user_lang), parse_mode="Markdown")
         return
     
+    # Проверяем лимит сообщений
     if not await check_message_limit(user_id):
         await send_limit_message(message)
         return
     
+    # Увеличиваем счётчик
     await increment_messages_today(user_id)
     
-    needs_greeting = await check_and_greet_if_needed(message)
-    
-    if needs_greeting:
-        theme = get_time_theme()
-        user_lang = await get_user_lang(user_id)
-        
-        greeting_ru = (
-            f"{theme['emoji']} **{theme['greeting']}**\n\n"
-            f"{theme['description']}\n\n"
-            f"🪶 Рад видеть тебя снова, воин.\n\n"
-            f"{theme['color']} Как твоё настроение сегодня?"
-        )
-        
-        greeting_en = (
-            f"{theme['emoji']} **{theme['greeting']}**\n\n"
-            f"{theme['description']}\n\n"
-            f"🪶 Glad to see you again, warrior.\n\n"
-            f"{theme['color']} How are you feeling today?"
-        )
-        
-        greeting_text = greeting_en if user_lang == "en" else greeting_ru
-        
-        try:
-            await message.answer_photo(
-                photo=theme["photo_url"],
-                caption=greeting_text,
-                reply_markup=get_mood_keyboard(user_lang),
-                parse_mode="Markdown"
-            )
-        except:
-            await message.answer(greeting_text, reply_markup=get_mood_keyboard(user_lang), parse_mode="Markdown")
-        
-        await save_message(user_id, "user", message.text)
-        return
-    
     await process_text_message(message, message.text)
-
 @dp.callback_query(lambda c: c.data == "mood_check")
 async def mood_check(callback: CallbackQuery):
     user_lang = await get_user_lang(callback.from_user.id)

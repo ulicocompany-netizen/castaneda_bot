@@ -48,6 +48,9 @@ openai_client = AsyncOpenAI(
 YOUR_ID = 862373702
 FREE_MESSAGES_LIMIT = 5
 
+# Ссылка на приветственное видео
+INTRO_VIDEO_URL = "https://raw.githubusercontent.com/ulicocompany-netizen/castaneda_bot/refs/heads/main/26%2C7%20%D0%BC%D0%B1.mp4"
+
 def get_time_theme():
     utc_now = datetime.now(timezone.utc)
     moscow_tz = timezone(timedelta(hours=3))
@@ -75,7 +78,7 @@ def get_time_theme():
             "emoji": "🌆",
             "greeting": "Добрый вечер, странник",
             "description": "Солнце садится. Время размышлений и видения.",
-            "color": "",
+            "color": "🌄",
             "photo_url": "https://raw.githubusercontent.com/ulicocompany-netizen/castaneda_bot/main/images/сумерки.jpeg"
         }
     else:
@@ -146,7 +149,7 @@ async def send_limit_message(message: types.Message):
     user_lang = await get_user_lang(message.from_user.id)
     
     text_ru = (
-        "️ **Ты достиг дневного лимита**\n\n"
+        "⚠️ **Ты достиг дневного лимита**\n\n"
         f"Бесплатно доступно {FREE_MESSAGES_LIMIT} сообщений в день.\n\n"
         "🌟 **Оформи подписку** — и путь откроется полностью:\n"
         "• Безлимитные сообщения\n"
@@ -159,7 +162,7 @@ async def send_limit_message(message: types.Message):
     text_en = (
         "⚠️ **You've reached the daily limit**\n\n"
         f"Free version allows {FREE_MESSAGES_LIMIT} messages per day.\n\n"
-        " **Subscribe** — and the path opens fully:\n"
+        "🌟 **Subscribe** — and the path opens fully:\n"
         "• Unlimited messages\n"
         "• 🦅 Dreaming\n"
         "• ⚡ Working with intention\n"
@@ -242,6 +245,17 @@ async def age_confirmed(callback: CallbackQuery):
     
     await save_message(user_id, "system", "age_confirmed")
     
+    # Отправка приветственного видео
+    try:
+        await callback.message.answer_video(
+            video=INTRO_VIDEO_URL,
+            caption="🪶 Твой путь начинается здесь...",
+            parse_mode="Markdown"
+        )
+        await asyncio.sleep(2)
+    except Exception as e:
+        print(f"Ошибка отправки видео: {e}")
+    
     theme = get_time_theme()
     
     text_ru = (
@@ -251,7 +265,7 @@ async def age_confirmed(callback: CallbackQuery):
         f"Прежде чем начать, знай:\n"
         f"🔒 *Свиток Тайны* (/privacy) — как мы храним твои секреты\n"
         f"📋 *Кодекс Воина* (/terms) — правила пути\n"
-        f" *Договор с Орлом* (/offer) — условия подписки\n\n"
+        f"📜 *Договор с Орлом* (/offer) — условия подписки\n\n"
         f"{theme['color']} Мир — лишь описание. Готов ли ты его остановить?"
     )
     
@@ -283,13 +297,13 @@ async def age_confirmed(callback: CallbackQuery):
 @dp.callback_query(lambda c: c.data == "age_no")
 async def age_denied(callback: CallbackQuery):
     text_ru = (
-        " **Ты ещё не готов.**\n\n"
+        "🌱 **Ты ещё не готов.**\n\n"
         "Путь воина подождёт. Вернись, когда почувствуешь\n"
         "зрелость и силу переступить порог.\n\n"
         "А пока — живи, расти, набирайся опыта. 🪶"
     )
     text_en = (
-        " **You are not ready yet.**\n\n"
+        "🌱 **You are not ready yet.**\n\n"
         "The warrior's path will wait. Return when you feel\n"
         "the maturity and strength to cross the threshold.\n\n"
         "For now — live, grow, gain experience. 🪶"
@@ -308,7 +322,7 @@ async def process_language(callback: CallbackQuery):
     await set_user_lang(user_id, lang)
     
     theme = get_time_theme()
-    lang_names = {"ru": "🇷 Русский", "en": "🇬 English"}
+    lang_names = {"ru": "🇷🇺 Русский", "en": "🇬🇧 English"}
     
     await callback.message.answer(
         f"✅ Язык установлен: {lang_names.get(lang, lang)}\n\n"
@@ -338,7 +352,7 @@ async def process_session(callback: CallbackQuery):
     if session_type in premium_sessions and not await is_subscribed(user_id):
         text_ru = (
             "🔒 **Эта практика доступна по подписке**\n\n"
-            " Видение снов и ⚡ Намерение — глубокие практики,\n"
+            "🦅 Видение снов и ⚡ Намерение — глубокие практики,\n"
             "требующие проводника и полной отдачи.\n\n"
             "🌟 Оформи подписку, чтобы открыть их."
         )
@@ -355,7 +369,7 @@ async def process_session(callback: CallbackQuery):
         return
     
     sessions_ru = {
-        "stop_world": " **Остановить мир**\n\nПрактика прерывания автоматизмов мышления.\nОпиши ситуацию, которая заела.",
+        "stop_world": "🌑 **Остановить мир**\n\nПрактика прерывания автоматизмов мышления.\nОпиши ситуацию, которая заела.",
         "death": "💀 **Разговор со смертью**\n\nСмерть стоит за твоим левым плечом...\nЧто бы ты сделал иначе, если бы знал, что это последний день?",
         "heart": "❤️ **Путь с сердцем**\n\nЕсть ли радость в том, что ты делаешь?\nИли лишь долг и страх?",
         "dreams": "🦅 **Видение снов**\n\nРасскажи свой сон. Мы посмотрим на него через призму второго внимания.",
@@ -378,7 +392,7 @@ async def process_session(callback: CallbackQuery):
 @dp.message(lambda message: message.voice)
 async def handle_voice(message: types.Message):
     await message.answer(
-        " Распознавание голоса временно недоступно.\n\n"
+        "🎤 Распознавание голоса временно недоступно.\n\n"
         "Пожалуйста, напиши текстом — я всё услышу! 📝"
     )
 
@@ -398,7 +412,7 @@ async def handle_text(message: types.Message):
         text_ru = (
             "🦅 **ПЕРЕСТУПИТЬ ПОРОГ**\n\n"
             "Путь воина — не для детей.\n"
-            "️ Этот путь — для тех, кому есть 18.\n\n"
+            "⚠️ Этот путь — для тех, кому есть 18.\n\n"
             "**Готов ли ты переступить порог?**"
         )
         text_en = (
@@ -493,7 +507,7 @@ async def mood_select(callback: CallbackQuery):
 async def breathing_menu(callback: CallbackQuery):
     user_lang = await get_user_lang(callback.from_user.id)
     
-    text_ru = "🧘 **Выбери дыхательную практику:**\n\n **4-7-8** — расслабление и сон\n🌬️ **Равное дыхание** — баланс и спокойствие\n🔥 **Огненное дыхание** — энергия и бодрость"
+    text_ru = "🧘 **Выбери дыхательную практику:**\n\n🌊 **4-7-8** — расслабление и сон\n🌬️ **Равное дыхание** — баланс и спокойствие\n🔥 **Огненное дыхание** — энергия и бодрость"
     text_en = "🧘 **Choose breathing technique:**\n\n🌊 **4-7-8** — relaxation & sleep\n🌬️ **Equal breathing** — balance & calm\n🔥 **Fire breathing** — energy & vitality"
     
     await callback.message.answer(
@@ -509,14 +523,14 @@ async def breathing_exercise(callback: CallbackQuery):
     user_lang = await get_user_lang(callback.from_user.id)
     
     exercises_ru = {
-        "478": " **Техника 4-7-8**\n\n1. Вдох через нос — **4 секунды**\n2. Задержи дыхание — **7 секунд**\n3. Выдох через рот — **8 секунд**\n\nПовтори 4 раза. Идеально перед сном. 💤",
+        "478": "🌊 **Техника 4-7-8**\n\n1. Вдох через нос — **4 секунды**\n2. Задержи дыхание — **7 секунд**\n3. Выдох через рот — **8 секунд**\n\nПовтори 4 раза. Идеально перед сном. 💤",
         "equal": "🌬️ **Равное дыхание**\n\n1. Вдох — **4 секунды**\n2. Выдох — **4 секунды**\n\nПовтори 5-10 раз. Возвращает в настоящее мгновение. ⚖️",
         "fire": "🔥 **Огненное дыхание**\n\n1. Резкий выдох через нос\n2. Вдох происходит автоматически\n3. Темп: 1-2 цикла в секунду\n\nДелай 30 секунд. Даёт мощный прилив энергии! ⚡"
     }
     
     exercises_en = {
         "478": "🌊 **4-7-8 Technique**\n\n1. Inhale through nose — **4 seconds**\n2. Hold breath — **7 seconds**\n3. Exhale through mouth — **8 seconds**\n\nRepeat 4 times. Perfect before sleep. 💤",
-        "equal": "️ **Equal Breathing**\n\n1. Inhale — **4 seconds**\n2. Exhale — **4 seconds**\n\nRepeat 5-10 times. Returns you to the present moment. ⚖️",
+        "equal": "🌬️ **Equal Breathing**\n\n1. Inhale — **4 seconds**\n2. Exhale — **4 seconds**\n\nRepeat 5-10 times. Returns you to the present moment. ⚖️",
         "fire": "🔥 **Fire Breathing**\n\n1. Sharp exhale through nose\n2. Inhale happens automatically\n3. Pace: 1-2 cycles per second\n\nDo for 30 seconds. Gives powerful energy boost! ⚡"
     }
     
@@ -531,7 +545,7 @@ async def consultation_menu(callback: CallbackQuery):
     
     text_ru = (
         "👤 **Личная консультация**\n\n"
-        " Иногда нужен проводник, чтобы увидеть путь яснее.\n\n"
+        "🪶 Иногда нужен проводник, чтобы увидеть путь яснее.\n\n"
         "💬 **Текстовая консультация (30 мин) — 1500₽**\n"
         "• Переписка в Telegram\n"
         "• Глубокий разбор ситуации\n"
@@ -597,7 +611,7 @@ async def process_consultation_booking(callback: CallbackQuery, consult_type: st
     )
     
     notification_en = (
-        f" **NEW REQUEST!**\n\n"
+        f"🔔 **NEW REQUEST!**\n\n"
         f"📋 Type: {type_name_en}\n"
         f"👤 Name: {full_name}\n"
         f"🔗 Username: @{username if username else 'none'}\n"
@@ -616,14 +630,14 @@ async def process_consultation_booking(callback: CallbackQuery, consult_type: st
     
     text_ru = (
         f"✅ **Заявка отправлена!**\n\n"
-        f" Ты выбрал: {type_name_ru}\n\n"
+        f"🪶 Ты выбрал: {type_name_ru}\n\n"
         f"Я свяжусь с тобой в течение 24 часов в Telegram.\n\n"
         f"Если нужно срочно — напиши мне напрямую: @ulicocompany"
     )
     
     text_en = (
         f"✅ **Request sent!**\n\n"
-        f" You chose: {type_name_en}\n\n"
+        f"🪶 You chose: {type_name_en}\n\n"
         f"I'll contact you within 24 hours on Telegram.\n\n"
         f"If urgent — write me directly: @ulicocompany"
     )
@@ -643,11 +657,11 @@ async def consult_info(callback: CallbackQuery):
         "2️⃣ Оставляешь заявку\n"
         "3️⃣ Я связываюсь с тобой в течение 24 часов\n"
         "4️⃣ Договариваемся об удобном времени\n"
-        "5️ Проводим консультацию\n\n"
+        "5️⃣ Проводим консультацию\n\n"
         "💳 **Оплата:**\n"
         "• Перевод на карту (Сбер, Тинькофф)\n"
         "• Оплата до начала сессии\n\n"
-        " **С чем работаю:**\n"
+        "🎯 **С чем работаю:**\n"
         "• Тревога и страхи\n"
         "• Поиск пути и предназначения\n"
         "• Отношения\n"
@@ -659,7 +673,7 @@ async def consult_info(callback: CallbackQuery):
     text_en = (
         "ℹ️ **How it works:**\n\n"
         "1️⃣ Choose format (text or voice)\n"
-        "2️ Leave a request\n"
+        "2️⃣ Leave a request\n"
         "3️⃣ I contact you within 24 hours\n"
         "4️⃣ We schedule convenient time\n"
         "5️⃣ Have the consultation\n\n"
@@ -770,8 +784,8 @@ async def subscribe_menu(callback: CallbackQuery):
             text_ru = f"✅ **Подписка активна**\n\nДействует до: {end_date}\n\nСпасибо, что ты с нами! 🪶"
             text_en = f"✅ **Subscription active**\n\nValid until: {end_date}\n\nThank you for being with us! 🪶"
         except:
-            text_ru = "✅ **Подписка активна**\n\nСпасибо, что ты с нами! "
-            text_en = "✅ **Subscription active**\n\nThank you for being with us! "
+            text_ru = "✅ **Подписка активна**\n\nСпасибо, что ты с нами! 🪶"
+            text_en = "✅ **Subscription active**\n\nThank you for being with us! 🪶"
     else:
         text_ru = (
             "🌟 **ПРЕМИУМ-ПОДПИСКА**\n\n"
@@ -840,7 +854,7 @@ async def subscribe_choose(callback: CallbackQuery):
         f"💰 Amount: **{plan_info['price']}₽**\n\n"
         f"💳 **Payment details:**\n"
         f"🏦 Tinkoff: 5534 2000 5167 0180\n"
-        f" Recipient: Koritsyna Y.A.\n\n"
+        f"👤 Recipient: Koritsyna Y.A.\n\n"
         f"After payment, click the button below — I'll check and activate subscription."
     )
     
@@ -914,7 +928,7 @@ async def my_subscription(callback: CallbackQuery):
         try:
             end_date = datetime.fromisoformat(sub_end).strftime("%d.%m.%Y")
             text_ru = f"✅ **Подписка активна**\n\nДействует до: {end_date}\n\n🪶 Путь открыт."
-            text_en = f"✅ **Subscription active**\n\nValid until: {end_date}\n\n The path is open."
+            text_en = f"✅ **Subscription active**\n\nValid until: {end_date}\n\n🪶 The path is open."
         except:
             text_ru = "✅ **Подписка активна**\n\n🪶 Путь открыт."
             text_en = "✅ **Subscription active**\n\n🪶 The path is open."
@@ -936,13 +950,13 @@ async def cmd_subscribe(message: types.Message):
         try:
             end_date = datetime.fromisoformat(sub_end).strftime("%d.%m.%Y")
             text_ru = f"✅ **Подписка активна**\n\nДействует до: {end_date}\n\n🪶 Путь открыт."
-            text_en = f"✅ **Subscription active**\n\nValid until: {end_date}\n\n The path is open."
+            text_en = f"✅ **Subscription active**\n\nValid until: {end_date}\n\n🪶 The path is open."
         except:
             text_ru = "✅ **Подписка активна**\n\n🪶 Путь открыт."
             text_en = "✅ **Subscription active**\n\n🪶 The path is open."
     else:
         text_ru = (
-            " **ПРЕМИУМ-ПОДПИСКА**\n\n"
+            "🌟 **ПРЕМИУМ-ПОДПИСКА**\n\n"
             "🔓 **Что ты получишь:**\n"
             "• 🦅 Видение снов — расшифровка и практики\n"
             "• ⚡ Работа с намерением — глубокие техники\n"
@@ -960,7 +974,7 @@ async def cmd_subscribe(message: types.Message):
             "• 🦅 Dreaming — interpretation and practices\n"
             "• ⚡ Working with intention — deep techniques\n"
             "• 💬 Unlimited messages\n"
-            "•  Knowledge library\n\n"
+            "• 📚 Knowledge library\n\n"
             "💰 **Price of the path:**\n"
             "• 1 moon (month) — 990₽\n"
             "• 3 moons — 2490₽ (save 17%)\n"
@@ -983,7 +997,7 @@ async def cmd_my_subscription(message: types.Message):
             text_ru = f"✅ **Подписка активна**\n\nДействует до: {end_date}\n\n🪶 Путь открыт."
             text_en = f"✅ **Subscription active**\n\nValid until: {end_date}\n\n🪶 The path is open."
         except:
-            text_ru = "✅ **Подписка активна**\n\n Путь открыт."
+            text_ru = "✅ **Подписка активна**\n\n🪶 Путь открыт."
             text_en = "✅ **Subscription active**\n\n🪶 The path is open."
     else:
         text_ru = "❌ **Подписка не активна**\n\n🌟 Оформи подписку, чтобы открыть полный путь.\n\n→ /subscribe"

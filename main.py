@@ -49,7 +49,7 @@ YOUR_ID = 862373702
 FREE_MESSAGES_LIMIT = 5
 
 # Ссылка на приветственное видео
-INTRO_VIDEO_URL = "https://raw.githubusercontent.com/ulicocompany-netizen/castaneda_bot/refs/heads/main/26%2C7%20%D0%BC%D0%B1.mp4"
+INTRO_VIDEO_URL = "https://raw.githubusercontent.com/ulicocompany-netizen/castaneda_bot/refs/heads/main/18%20%D0%BC%D0%B1.mp4"
 
 def get_time_theme():
     utc_now = datetime.now(timezone.utc)

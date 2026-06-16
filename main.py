@@ -140,11 +140,14 @@ async def check_and_greet_if_needed(message: types.Message):
         return False
 
 async def check_message_limit(user_id: int) -> bool:
+    # Админ (ты) без лимитов
+    if user_id == 862373702:
+        return True
+    
     if await is_subscribed(user_id):
         return True
     messages_count = await get_messages_today(user_id)
     return messages_count < FREE_MESSAGES_LIMIT
-
 async def send_limit_message(message: types.Message):
     user_lang = await get_user_lang(message.from_user.id)
     

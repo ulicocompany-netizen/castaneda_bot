@@ -180,9 +180,6 @@ async def send_limit_message(message: types.Message):
 # 🚀 ВСЕ КОМАНДЫ СНАЧАЛА (ПОРЯДОК ВАЖЕН!)
 # ============================================
 
-@dp.message(~Command())  # Игнорируем все команды
-async def handle_text(message: types.Message):
-    # ... остальной код
 async def cmd_start(message: types.Message):
     user_id = message.from_user.id
     context = await get_context(user_id)
@@ -1101,7 +1098,83 @@ async def handle_text(message: types.Message):
 # 📮 ФОНОВАЯ ЗАДАЧА
 # ============================================
 
-async def daily_reminder_loop():
+@dp.message(~Command())
+async def handle_text(message: types.Message):
+    if not message.text:
+        return
+    
+    user_id = message.from_user.id
+    
+    # Проверяем возраст
+    context = await get_context(user_id)
+    age_confirmed = any(msg["content"] == "age_confirmed" for msg in context if msg["role"] == "system")
+    
+    if not age_confirmed:
+        user_lang = await get_user_lang(user_id)
+        
+        text_ru = (
+            "🦅 **ПЕРЕСТУПИТЬ ПОРОГ**\n\n"
+            "Путь воина — не для детей.\n"
+            "️ Этот путь — для тех, кому есть 18.\n\n"
+            "**Готов ли ты переступить порог?**"
+        )
+        text_en = (
+            "🦅 **CROSS THE THRESHOLD**\n\n"
+            "The warrior's path is not for children.\n"
+            "⚠️ This path is for those who are 18+.\n\n"
+            "**Are you ready to cross the threshold?**"
+        )
+        
+        text = text_en if user_lang == "en" else text_ru
+        await message.answer(text, reply_markup=get_age_keyboard(user_lang), parse_mode="Markdown")
+        return
+    
+    # Проверяем лимит
+    if not await check_message_limit(user_id):
+        await send_limit_message(message)
+        return
+    
+    # Увеличиваем счётчик
+    await increment_messages_today(user_id)
+    
+    # Приветствие
+    needs_greeting = await check_and_greet_if_needed(message)
+    
+    if needs_greeting:
+        theme = get_time_theme()
+        user_lang = await get_user_lang(user_id)
+        
+        greeting_ru = (
+            f"{theme['emoji']} **{theme['greeting']}**\n\n"
+            f"{theme['description']}\n\n"
+            f"🪶 Рад видеть тебя снова, воин.\n\n"
+            f"{theme['color']} Как твоё настроение сегодня?"
+        )
+        
+        greeting_en = (
+            f"{theme['emoji']} **{theme['greeting']}**\n\n"
+            f"{theme['description']}\n\n"
+            f"🪶 Glad to see you again, warrior.\n\n"
+            f"{theme['color']} How are you feeling today?"
+        )
+        
+        greeting_text = greeting_en if user_lang == "en" else greeting_ru
+        
+        try:
+            await message.answer_photo(
+                photo=theme["photo_url"],
+                caption=greeting_text,
+                reply_markup=get_mood_keyboard(user_lang),
+                parse_mode="Markdown"
+            )
+        except:
+            await message.answer(greeting_text, reply_markup=get_mood_keyboard(user_lang), parse_mode="Markdown")
+        
+        await save_message(user_id, "user", message.text)
+        return
+    
+    await process_text_message(message, message.text)
+    async def daily_reminder_loop():
     await asyncio.sleep(60)
     
     while True:

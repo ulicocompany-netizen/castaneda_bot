@@ -125,6 +125,11 @@ async def set_subscription(user_id: int, days: int = 30):
         await db.commit()
 
 async def is_subscribed(user_id: int) -> bool:
+    # Админ (ты) всегда имеет доступ ко всему
+    if user_id == 862373702:
+        return True
+    
+    # Для остальных — обычная проверка
     sub_end = await get_subscription_status(user_id)
     if not sub_end:
         return False

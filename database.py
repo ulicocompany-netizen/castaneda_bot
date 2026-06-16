@@ -190,6 +190,10 @@ async def get_messages_today(user_id: int) -> int:
         return messages_count or 0
 
 async def increment_messages_today(user_id: int):
+    # Админ не тратит лимит
+    if user_id == 862373702:
+        return
+    
     today = datetime.now().strftime("%Y-%m-%d")
     async with aiosqlite.connect(DATABASE_URL) as db:
         cursor = await db.execute(

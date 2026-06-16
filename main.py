@@ -48,8 +48,9 @@ openai_client = AsyncOpenAI(
 YOUR_ID = 862373702
 FREE_MESSAGES_LIMIT = 5
 
-# Ссылка на приветственное видео
-INTRO_VIDEO_URL = "https://raw.githubusercontent.com/ulicocompany-netizen/castaneda_bot/refs/heads/main/10%20%D0%BC%D0%B1.mp4"
+# Ссылка на видео (лучше загрузить на catbox.moe и вставить сюда)
+# Если ссылка с GitHub не работает, видео просто не придет, но бот не упадет.
+INTRO_VIDEO_URL = "https://raw.githubusercontent.com/ulicocompany-netizen/castaneda_bot/main/10%20мб.mp4"
 
 def get_time_theme():
     utc_now = datetime.now(timezone.utc)
@@ -98,7 +99,7 @@ async def process_text_message(message: types.Message, text: str):
     if user_lang == "ru":
         lang_instruction = "\n\n🔴 ВАЖНОЕ ПРАВИЛО:\n- Пользователь пишет на РУССКОМ языке\n- Ты ДОЛЖЕН отвечать ТОЛЬКО на РУССКОМ\n- НИКАКОГО английского в ответах"
     else:
-        lang_instruction = "\n\n🔴 IMPORTANT RULE:\n- User writes in ENGLISH\n- You MUST respond ONLY in ENGLISH\n- NO Russian in your answers"
+        lang_instruction = "\n\n IMPORTANT RULE:\n- User writes in ENGLISH\n- You MUST respond ONLY in ENGLISH\n- NO Russian in your answers"
     
     system_prompt = CASTANEDA_THERAPY_PROMPT + lang_instruction
     
@@ -113,14 +114,14 @@ async def process_text_message(message: types.Message, text: str):
             model="deepseek-chat",
             messages=messages,
             temperature=0.75,
-            max_tokens=1000
+            max_tokens=1000  # Увеличили лимит, чтобы текст не обрывался
         )
         reply = response.choices[0].message.content
         await save_message(user_id, "user", text)
         await save_message(user_id, "assistant", reply)
         await message.answer(reply)
     except Exception as e:
-        await message.answer("🌫 Мир зашумел... Подожди мгновение и попробуй снова.")
+        await message.answer(" Мир зашумел... Подожди мгновение и попробуй снова.")
         print(f"DeepSeek Error: {e}")
 
 async def check_and_greet_if_needed(message: types.Message):
@@ -141,18 +142,19 @@ async def check_and_greet_if_needed(message: types.Message):
 
 async def check_message_limit(user_id: int) -> bool:
     # Админ (ты) без лимитов
-    if user_id == 862373702:
+    if user_id == YOUR_ID:
         return True
     
     if await is_subscribed(user_id):
         return True
     messages_count = await get_messages_today(user_id)
     return messages_count < FREE_MESSAGES_LIMIT
+
 async def send_limit_message(message: types.Message):
     user_lang = await get_user_lang(message.from_user.id)
     
     text_ru = (
-        "⚠️ **Ты достиг дневного лимита**\n\n"
+        "️ **Ты достиг дневного лимита**\n\n"
         f"Бесплатно доступно {FREE_MESSAGES_LIMIT} сообщений в день.\n\n"
         "🌟 **Оформи подписку** — и путь откроется полностью:\n"
         "• Безлимитные сообщения\n"
@@ -165,7 +167,7 @@ async def send_limit_message(message: types.Message):
     text_en = (
         "⚠️ **You've reached the daily limit**\n\n"
         f"Free version allows {FREE_MESSAGES_LIMIT} messages per day.\n\n"
-        "🌟 **Subscribe** — and the path opens fully:\n"
+        " **Subscribe** — and the path opens fully:\n"
         "• Unlimited messages\n"
         "• 🦅 Dreaming\n"
         "• ⚡ Working with intention\n"
@@ -177,9 +179,10 @@ async def send_limit_message(message: types.Message):
     await message.answer(text, parse_mode="Markdown")
 
 # ============================================
-# 🚀 ВСЕ КОМАНДЫ СНАЧАЛА (ПОРЯДОК ВАЖЕН!)
+# 1. ВСЕ КОМАНДЫ (СНАЧАЛА!)
 # ============================================
 
+@dp.message(Command("start"))
 async def cmd_start(message: types.Message):
     user_id = message.from_user.id
     context = await get_context(user_id)
@@ -232,7 +235,7 @@ async def cmd_start(message: types.Message):
             "• Conversations with death\n"
             "• Stopping the internal dialogue\n"
             "• Practices of second attention\n\n"
-            "⚠️ This path is for those who are 18+.\n\n"
+            "️ This path is for those who are 18+.\n\n"
             "**Are you ready to cross the threshold?**"
         )
         
@@ -349,7 +352,7 @@ async def cmd_my_subscription(message: types.Message):
             text_en = f"✅ **Subscription active**\n\nValid until: {end_date}\n\n🪶 The path is open."
         except:
             text_ru = "✅ **Подписка активна**\n\n🪶 Путь открыт."
-            text_en = "✅ **Subscription active**\n\n🪶 The path is open."
+            text_en = "✅ **Subscription active**\n\n The path is open."
     else:
         text_ru = "❌ **Подписка не активна**\n\n🌟 Оформи подписку, чтобы открыть полный путь.\n\n→ /subscribe"
         text_en = "❌ **Subscription inactive**\n\n🌟 Subscribe to unlock the full path.\n\n→ /subscribe"
@@ -413,7 +416,7 @@ async def cmd_broadcast(message: types.Message):
     await message.answer(f"✅ Рассылка завершена\nОтправлено: {sent}\nОшибок: {failed}")
 
 # ============================================
-# 🔘 ВСЕ CALLBACKS (кнопки)
+# 2. ВСЕ CALLBACKS (КНОПКИ)
 # ============================================
 
 @dp.callback_query(lambda c: c.data == "age_yes")
@@ -423,7 +426,7 @@ async def age_confirmed(callback: CallbackQuery):
     
     await save_message(user_id, "system", "age_confirmed")
     
-    # Отправка видео
+    # Отправка видео (с защитой от ошибок)
     try:
         await callback.message.answer_video(
             video=INTRO_VIDEO_URL,
@@ -432,7 +435,8 @@ async def age_confirmed(callback: CallbackQuery):
         )
         await asyncio.sleep(2)
     except Exception as e:
-        print(f"Ошибка видео: {e}")
+        print(f"Ошибка видео (возможно, ссылка битая): {e}")
+        # Если видео не вышло, бот не падает, а просто идет дальше
     
     theme = get_time_theme()
     
@@ -442,7 +446,7 @@ async def age_confirmed(callback: CallbackQuery):
         f"🦅 Добро пожаловать на путь воина.\n\n"
         f"Прежде чем начать, знай:\n"
         f"🔒 *Свиток Тайны* (/privacy) — как мы храним твои секреты\n"
-        f"📋 *Кодекс Воина* (/terms) — правила пути\n"
+        f" *Кодекс Воина* (/terms) — правила пути\n"
         f"📜 *Договор с Орлом* (/offer) — условия подписки\n\n"
         f"{theme['color']} Мир — лишь описание. Готов ли ты его остановить?"
     )
@@ -520,7 +524,7 @@ async def process_session(callback: CallbackQuery):
     if session_type in premium_sessions and not await is_subscribed(user_id):
         text_ru = (
             "🔒 **Эта практика доступна по подписке**\n\n"
-            "🦅 Видение снов и ⚡ Намерение — глубокие практики,\n"
+            " Видение снов и ⚡ Намерение — глубокие практики,\n"
             "требующие проводника и полной отдачи.\n\n"
             "🌟 Оформи подписку, чтобы открыть их."
         )
@@ -583,7 +587,7 @@ async def mood_select(callback: CallbackQuery):
         "good": "😊 Glad you're doing well! A warrior maintains clarity in joy.",
         "ok": "😐 Okay is also a path. A warrior doesn't judge their state.",
         "bad": "😔 I hear you. Sometimes acknowledging pain is the first step to healing. Tell me what happened?",
-        "anxiety": "😰 Anxiety is wind trying to knock you off your path. But a warrior stands firm. Let's breathe together?"
+        "anxiety": " Anxiety is wind trying to knock you off your path. But a warrior stands firm. Let's breathe together?"
     }
     
     responses = responses_en if user_lang == "en" else responses_ru
@@ -595,8 +599,8 @@ async def mood_select(callback: CallbackQuery):
 async def breathing_menu(callback: CallbackQuery):
     user_lang = await get_user_lang(callback.from_user.id)
     
-    text_ru = "🧘 **Выбери дыхательную практику:**\n\n🌊 **4-7-8** — расслабление и сон\n🌬️ **Равное дыхание** — баланс и спокойствие\n🔥 **Огненное дыхание** — энергия и бодрость"
-    text_en = "🧘 **Choose breathing technique:**\n\n🌊 **4-7-8** — relaxation & sleep\n🌬️ **Equal breathing** — balance & calm\n🔥 **Fire breathing** — energy & vitality"
+    text_ru = "🧘 **Выбери дыхательную практику:**\n\n **4-7-8** — расслабление и сон\n🌬️ **Равное дыхание** — баланс и спокойствие\n🔥 **Огненное дыхание** — энергия и бодрость"
+    text_en = "🧘 **Choose breathing technique:**\n\n🌊 **4-7-8** — relaxation & sleep\n🌬️ **Equal breathing** — balance & calm\n **Fire breathing** — energy & vitality"
     
     await callback.message.answer(
         text_en if user_lang == "en" else text_ru,
@@ -611,15 +615,15 @@ async def breathing_exercise(callback: CallbackQuery):
     user_lang = await get_user_lang(callback.from_user.id)
     
     exercises_ru = {
-        "478": "🌊 **Техника 4-7-8**\n\n1. Вдох через нос — **4 секунды**\n2. Задержи дыхание — **7 секунд**\n3. Выдох через рот — **8 секунд**\n\nПовтори 4 раза. Идеально перед сном. 💤",
+        "478": " **Техника 4-7-8**\n\n1. Вдох через нос — **4 секунды**\n2. Задержи дыхание — **7 секунд**\n3. Выдох через рот — **8 секунд**\n\nПовтори 4 раза. Идеально перед сном. 💤",
         "equal": "🌬️ **Равное дыхание**\n\n1. Вдох — **4 секунды**\n2. Выдох — **4 секунды**\n\nПовтори 5-10 раз. Возвращает в настоящее мгновение. ⚖️",
         "fire": "🔥 **Огненное дыхание**\n\n1. Резкий выдох через нос\n2. Вдох происходит автоматически\n3. Темп: 1-2 цикла в секунду\n\nДелай 30 секунд. Даёт мощный прилив энергии! ⚡"
     }
     
     exercises_en = {
-        "478": "🌊 **4-7-8 Technique**\n\n1. Inhale through nose — **4 seconds**\n2. Hold breath — **7 seconds**\n3. Exhale through mouth — **8 seconds**\n\nRepeat 4 times. Perfect before sleep. 💤",
+        "478": " **4-7-8 Technique**\n\n1. Inhale through nose — **4 seconds**\n2. Hold breath — **7 seconds**\n3. Exhale through mouth — **8 seconds**\n\nRepeat 4 times. Perfect before sleep. 💤",
         "equal": "🌬️ **Equal Breathing**\n\n1. Inhale — **4 seconds**\n2. Exhale — **4 seconds**\n\nRepeat 5-10 times. Returns you to the present moment. ⚖️",
-        "fire": "🔥 **Fire Breathing**\n\n1. Sharp exhale through nose\n2. Inhale happens automatically\n3. Pace: 1-2 cycles per second\n\nDo for 30 seconds. Gives powerful energy boost! ⚡"
+        "fire": " **Fire Breathing**\n\n1. Sharp exhale through nose\n2. Inhale happens automatically\n3. Pace: 1-2 cycles per second\n\nDo for 30 seconds. Gives powerful energy boost! ⚡"
     }
     
     exercises = exercises_en if user_lang == "en" else exercises_ru
@@ -759,10 +763,10 @@ async def consult_info(callback: CallbackQuery):
     )
     
     text_en = (
-        "ℹ️ **How it works:**\n\n"
+        "️ **How it works:**\n\n"
         "1️⃣ Choose format (text or voice)\n"
         "2️⃣ Leave a request\n"
-        "3️⃣ I contact you within 24 hours\n"
+        "3️ I contact you within 24 hours\n"
         "4️⃣ We schedule convenient time\n"
         "5️⃣ Have the consultation\n\n"
         "💳 **Payment:**\n"
@@ -833,7 +837,7 @@ async def subscribe_menu(callback: CallbackQuery):
         try:
             end_date = datetime.fromisoformat(sub_end).strftime("%d.%m.%Y")
             text_ru = f"✅ **Подписка активна**\n\nДействует до: {end_date}\n\nСпасибо, что ты с нами! 🪶"
-            text_en = f"✅ **Subscription active**\n\nValid until: {end_date}\n\nThank you for being with us! 🪶"
+            text_en = f"✅ **Subscription active**\n\nValid until: {end_date}\n\nThank you for being with us! "
         except:
             text_ru = "✅ **Подписка активна**\n\nСпасибо, что ты с нами! 🪶"
             text_en = "✅ **Subscription active**\n\nThank you for being with us! 🪶"
@@ -984,8 +988,8 @@ async def my_subscription(callback: CallbackQuery):
             text_ru = "✅ **Подписка активна**\n\n🪶 Путь открыт."
             text_en = "✅ **Subscription active**\n\n🪶 The path is open."
     else:
-        text_ru = "❌ **Подписка не активна**\n\n🌟 Оформи подписку, чтобы открыть полный путь.\n\n→ /subscribe"
-        text_en = "❌ **Subscription inactive**\n\n🌟 Subscribe to unlock the full path.\n\n→ /subscribe"
+        text_ru = "❌ **Подписка не активна**\n\n Оформи подписку, чтобы открыть полный путь.\n\n→ /subscribe"
+        text_en = " **Subscription inactive**\n\n🌟 Subscribe to unlock the full path.\n\n→ /subscribe"
     
     text = text_en if user_lang == "en" else text_ru
     await callback.message.answer(text, parse_mode="Markdown")
@@ -1007,98 +1011,10 @@ async def back_to_menu(callback: CallbackQuery):
     await callback.answer()
 
 # ============================================
-# 💬 ОБЩИЙ ОБРАБОТЧИК ТЕКСТА (СТРОГО В КОНЦЕ!)
+# 3. ОБЩИЙ ОБРАБОТЧИК ТЕКСТА (СТРОГО В КОНЦЕ!)
 # ============================================
 
-@dp.message(lambda message: message.voice)
-async def handle_voice(message: types.Message):
-    await message.answer(
-        "🎤 Распознавание голоса временно недоступно.\n\n"
-        "Пожалуйста, напиши текстом — я всё услышу! 📝"
-    )
-
-@dp.message()
-async def handle_text(message: types.Message):
-    if not message.text:
-        return
-    
-    user_id = message.from_user.id
-    
-    # Проверяем возраст
-    context = await get_context(user_id)
-    age_confirmed = any(msg["content"] == "age_confirmed" for msg in context if msg["role"] == "system")
-    
-    if not age_confirmed:
-        user_lang = await get_user_lang(user_id)
-        text_ru = "🦅 **ПЕРЕСТУПИТЬ ПОРОГ**\n\nПуть воина — не для детей.\n⚠️ Этот путь — для тех, кому есть 18.\n\n**Готов ли ты переступить порог?**"
-        text_en = "🦅 **CROSS THE THRESHOLD**\n\nThe warrior's path is not for children.\n⚠️ This path is for those who are 18+.\n\n**Are you ready to cross the threshold?**"
-        text = text_en if user_lang == "en" else text_ru
-        await message.answer(text, reply_markup=get_age_keyboard(user_lang), parse_mode="Markdown")
-        return
-    
-    # Проверяем лимит
-    if not await check_message_limit(user_id):
-        await send_limit_message(message)
-        return
-    
-    # === НОВАЯ ПРОВЕРКА: Премиум-практики в чате ===
-    user_lang = await get_user_lang(user_id)
-    text_lower = message.text.lower()
-    
-    # Ключевые слова для премиум-практик
-    premium_keywords = ["видение снов", "расшифруй сон", "мой сон", "толкование сна", "сон приснился", "намерение", "работа с намерением"]
-    premium_keywords_en = ["dream", "dreaming", "interpret my dream", "my dream", "intention"]
-    
-    keywords = premium_keywords_en if user_lang == "en" else premium_keywords
-    
-    if any(keyword in text_lower for keyword in keywords):
-        if not await is_subscribed(user_id):
-            text_ru = (
-                "🔒 **Эта практика доступна по подписке**\n\n"
-                "🦅 Видение снов и ⚡ Намерение — глубокие практики,\n"
-                "требующие проводника и полной отдачи.\n\n"
-                "🌟 Оформи подписку, чтобы открыть их.\n\n"
-                "→ /subscribe"
-            )
-            text_en = (
-                "🔒 **This practice requires subscription**\n\n"
-                "🦅 Dreaming and ⚡ Intention are deep practices\n"
-                "that require a guide and full commitment.\n\n"
-                "🌟 Subscribe to unlock them.\n\n"
-                "→ /subscribe"
-            )
-            text = text_en if user_lang == "en" else text_ru
-            await message.answer(text, parse_mode="Markdown")
-            return  # ВАЖНО: прекращаем обработку
-    # ===============================================
-    
-    # Увеличиваем счётчик
-    await increment_messages_today(user_id)
-    
-    # Приветствие
-    needs_greeting = await check_and_greet_if_needed(message)
-    if needs_greeting:
-        theme = get_time_theme()
-        user_lang = await get_user_lang(user_id)
-        greeting_ru = f"{theme['emoji']} **{theme['greeting']}**\n\n{theme['description']}\n\n🪶 Рад видеть тебя снова, воин.\n\n{theme['color']} Как твоё настроение сегодня?"
-        greeting_en = f"{theme['emoji']} **{theme['greeting']}**\n\n{theme['description']}\n\n🪶 Glad to see you again, warrior.\n\n{theme['color']} How are you feeling today?"
-        greeting_text = greeting_en if user_lang == "en" else greeting_ru
-        
-        try:
-            await message.answer_photo(photo=theme["photo_url"], caption=greeting_text, reply_markup=get_mood_keyboard(user_lang), parse_mode="Markdown")
-        except:
-            await message.answer(greeting_text, reply_markup=get_mood_keyboard(user_lang), parse_mode="Markdown")
-        
-        await save_message(user_id, "user", message.text)
-        return
-    
-    await process_text_message(message, message.text)
-
-# ============================================
-# 📮 ФОНОВАЯ ЗАДАЧА
-# ============================================
-
-@dp.message(~Command())
+@dp.message(~Command())  # ~Command() означает "ВСЕ СООБЩЕНИЯ КРОМЕ КОМАНД"
 async def handle_text(message: types.Message):
     if not message.text:
         return
@@ -1115,7 +1031,7 @@ async def handle_text(message: types.Message):
         text_ru = (
             "🦅 **ПЕРЕСТУПИТЬ ПОРОГ**\n\n"
             "Путь воина — не для детей.\n"
-            "️ Этот путь — для тех, кому есть 18.\n\n"
+            "⚠️ Этот путь — для тех, кому есть 18.\n\n"
             "**Готов ли ты переступить порог?**"
         )
         text_en = (
@@ -1129,10 +1045,44 @@ async def handle_text(message: types.Message):
         await message.answer(text, reply_markup=get_age_keyboard(user_lang), parse_mode="Markdown")
         return
     
-    # Проверяем лимит
+    # Проверяем лимит сообщений
     if not await check_message_limit(user_id):
         await send_limit_message(message)
         return
+    
+    # === ПРОВЕРКА ПРЕМИУМ-ПРАКТИК В ТЕКСТЕ ===
+    user_lang = await get_user_lang(user_id)
+    text_lower = message.text.lower()
+    
+    # Ключевые слова, требующие подписки
+    premium_keywords = {
+        "ru": ["видение снов", "расшифруй сон", "мой сон", "толкование сна", "сон приснился", "намерение", "работа с намерением"],
+        "en": ["dream", "dreaming", "interpret my dream", "my dream", "intention"]
+    }
+    
+    keywords = premium_keywords[user_lang]
+    
+    # Если текст содержит ключевые слова И пользователь не подписан
+    if any(keyword in text_lower for keyword in keywords) and not await is_subscribed(user_id):
+        text_ru = (
+            " **Эта практика доступна по подписке**\n\n"
+            "🦅 Видение снов и ⚡ Намерение — глубокие практики,\n"
+            "требующие проводника и полной отдачи.\n\n"
+            "🌟 Оформи подписку, чтобы открыть их.\n\n"
+            "→ /subscribe"
+        )
+        text_en = (
+            " **This practice requires subscription**\n\n"
+            "🦅 Dreaming and  Intention are deep practices\n"
+            "that require a guide and full commitment.\n\n"
+            "🌟 Subscribe to unlock them.\n\n"
+            "→ /subscribe"
+        )
+        
+        text = text_en if user_lang == "en" else text_ru
+        await message.answer(text, parse_mode="Markdown")
+        return  # Прерываем функцию, чтобы не отправлять сообщение AI
+    # ==========================================
     
     # Увеличиваем счётчик
     await increment_messages_today(user_id)
@@ -1147,7 +1097,7 @@ async def handle_text(message: types.Message):
         greeting_ru = (
             f"{theme['emoji']} **{theme['greeting']}**\n\n"
             f"{theme['description']}\n\n"
-            f"🪶 Рад видеть тебя снова, воин.\n\n"
+            f" Рад видеть тебя снова, воин.\n\n"
             f"{theme['color']} Как твоё настроение сегодня?"
         )
         
@@ -1174,7 +1124,12 @@ async def handle_text(message: types.Message):
         return
     
     await process_text_message(message, message.text)
-    async def daily_reminder_loop():
+
+# ============================================
+# 4. ФОНОВЫЕ ЗАДАЧИ И ЗАПУСК
+# ============================================
+
+async def daily_reminder_loop():
     await asyncio.sleep(60)
     
     while True:
@@ -1182,7 +1137,7 @@ async def handle_text(message: types.Message):
             now = datetime.now()
             
             if now.hour == 12 and now.minute < 5:
-                print("📮 Starting daily reminder job...")
+                print(" Starting daily reminder job...")
                 
                 users = await get_users_without_subscription()
                 sent_count = 0

@@ -180,7 +180,9 @@ async def send_limit_message(message: types.Message):
 # 🚀 ВСЕ КОМАНДЫ СНАЧАЛА (ПОРЯДОК ВАЖЕН!)
 # ============================================
 
-@dp.message(Command("start"))
+@dp.message(~Command())  # Игнорируем все команды
+async def handle_text(message: types.Message):
+    # ... остальной код
 async def cmd_start(message: types.Message):
     user_id = message.from_user.id
     context = await get_context(user_id)

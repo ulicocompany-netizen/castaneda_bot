@@ -113,7 +113,7 @@ async def process_text_message(message: types.Message, text: str):
             model="deepseek-chat",
             messages=messages,
             temperature=0.75,
-            max_tokens=600
+            max_tokens=1000
         )
         reply = response.choices[0].message.content
         await save_message(user_id, "user", text)

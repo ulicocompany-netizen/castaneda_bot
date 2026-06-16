@@ -1031,62 +1031,62 @@ async def handle_text(message: types.Message):
     
     if not age_confirmed:
         user_lang = await get_user_lang(user_id)
-        
-        text_ru = (
-            "🦅 **ПЕРЕСТУПИТЬ ПОРОГ**\n\n"
-            "Путь воина — не для детей.\n"
-            "⚠️ Этот путь — для тех, кому есть 18.\n\n"
-            "**Готов ли ты переступить порог?**"
-        )
-        text_en = (
-            "🦅 **CROSS THE THRESHOLD**\n\n"
-            "The warrior's path is not for children.\n"
-            "⚠️ This path is for those who are 18+.\n\n"
-            "**Are you ready to cross the threshold?**"
-        )
-        
+        text_ru = "🦅 **ПЕРЕСТУПИТЬ ПОРОГ**\n\nПуть воина — не для детей.\n⚠️ Этот путь — для тех, кому есть 18.\n\n**Готов ли ты переступить порог?**"
+        text_en = "🦅 **CROSS THE THRESHOLD**\n\nThe warrior's path is not for children.\n⚠️ This path is for those who are 18+.\n\n**Are you ready to cross the threshold?**"
         text = text_en if user_lang == "en" else text_ru
         await message.answer(text, reply_markup=get_age_keyboard(user_lang), parse_mode="Markdown")
         return
     
-    # Проверяем лимит сообщений
+    # Проверяем лимит
     if not await check_message_limit(user_id):
         await send_limit_message(message)
         return
+    
+    # === НОВАЯ ПРОВЕРКА: Премиум-практики в чате ===
+    user_lang = await get_user_lang(user_id)
+    text_lower = message.text.lower()
+    
+    # Ключевые слова для премиум-практик
+    premium_keywords = ["видение снов", "расшифруй сон", "мой сон", "толкование сна", "сон приснился", "намерение", "работа с намерением"]
+    premium_keywords_en = ["dream", "dreaming", "interpret my dream", "my dream", "intention"]
+    
+    keywords = premium_keywords_en if user_lang == "en" else premium_keywords
+    
+    if any(keyword in text_lower for keyword in keywords):
+        if not await is_subscribed(user_id):
+            text_ru = (
+                "🔒 **Эта практика доступна по подписке**\n\n"
+                "🦅 Видение снов и ⚡ Намерение — глубокие практики,\n"
+                "требующие проводника и полной отдачи.\n\n"
+                "🌟 Оформи подписку, чтобы открыть их.\n\n"
+                "→ /subscribe"
+            )
+            text_en = (
+                "🔒 **This practice requires subscription**\n\n"
+                "🦅 Dreaming and ⚡ Intention are deep practices\n"
+                "that require a guide and full commitment.\n\n"
+                "🌟 Subscribe to unlock them.\n\n"
+                "→ /subscribe"
+            )
+            text = text_en if user_lang == "en" else text_ru
+            await message.answer(text, parse_mode="Markdown")
+            return  # ВАЖНО: прекращаем обработку
+    # ===============================================
     
     # Увеличиваем счётчик
     await increment_messages_today(user_id)
     
     # Приветствие
     needs_greeting = await check_and_greet_if_needed(message)
-    
     if needs_greeting:
         theme = get_time_theme()
         user_lang = await get_user_lang(user_id)
-        
-        greeting_ru = (
-            f"{theme['emoji']} **{theme['greeting']}**\n\n"
-            f"{theme['description']}\n\n"
-            f"🪶 Рад видеть тебя снова, воин.\n\n"
-            f"{theme['color']} Как твоё настроение сегодня?"
-        )
-        
-        greeting_en = (
-            f"{theme['emoji']} **{theme['greeting']}**\n\n"
-            f"{theme['description']}\n\n"
-            f"🪶 Glad to see you again, warrior.\n\n"
-            f"{theme['color']} How are you feeling today?"
-        )
-        
+        greeting_ru = f"{theme['emoji']} **{theme['greeting']}**\n\n{theme['description']}\n\n🪶 Рад видеть тебя снова, воин.\n\n{theme['color']} Как твоё настроение сегодня?"
+        greeting_en = f"{theme['emoji']} **{theme['greeting']}**\n\n{theme['description']}\n\n🪶 Glad to see you again, warrior.\n\n{theme['color']} How are you feeling today?"
         greeting_text = greeting_en if user_lang == "en" else greeting_ru
         
         try:
-            await message.answer_photo(
-                photo=theme["photo_url"],
-                caption=greeting_text,
-                reply_markup=get_mood_keyboard(user_lang),
-                parse_mode="Markdown"
-            )
+            await message.answer_photo(photo=theme["photo_url"], caption=greeting_text, reply_markup=get_mood_keyboard(user_lang), parse_mode="Markdown")
         except:
             await message.answer(greeting_text, reply_markup=get_mood_keyboard(user_lang), parse_mode="Markdown")
         

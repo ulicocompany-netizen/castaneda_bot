@@ -1169,11 +1169,12 @@ async def daily_reminder_loop():
 
 async def main():
     await init_db()
-    print("🪶 Бот запущен и готов к пути воина...")
+    print(" Бот запущен и готов к пути воина...")
     
     asyncio.create_task(daily_reminder_loop())
     
     await dp.start_polling(bot)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

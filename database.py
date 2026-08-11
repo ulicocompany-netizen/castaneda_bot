@@ -5,6 +5,7 @@ DATABASE_URL = "bot.db"
 
 async def init_db():
     async with aiosqlite.connect(DATABASE_URL) as db:
+        # Основная таблица пользователей
         await db.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 user_id INTEGER PRIMARY KEY,
@@ -14,10 +15,12 @@ async def init_db():
                 last_reminder DATETIME,
                 messages_today INTEGER DEFAULT 0,
                 last_message_date TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                tale1_seen INTEGER DEFAULT 0
             )
         """)
         
+        # Таблица сообщений (контекст диалога)
         await db.execute("""
             CREATE TABLE IF NOT EXISTS messages (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -29,6 +32,7 @@ async def init_db():
             )
         """)
         
+        # Таблица настроений
         await db.execute("""
             CREATE TABLE IF NOT EXISTS moods (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -39,7 +43,29 @@ async def init_db():
             )
         """)
         
+        # Таблица для FSM сказки (текущий шаг)
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS user_fsm (
+                user_id INTEGER PRIMARY KEY,
+                tale_step INTEGER DEFAULT 0
+            )
+        """)
+        
+        # Таблица событий воронки сказки
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS fable_events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                event TEXT,
+                timestamp TEXT
+            )
+        """)
+        
         await db.commit()
+
+# ============================================
+# ЯЗЫК ПОЛЬЗОВАТЕЛЯ
+# ============================================
 
 async def get_user_lang(user_id: int) -> str:
     async with aiosqlite.connect(DATABASE_URL) as db:
@@ -54,6 +80,10 @@ async def set_user_lang(user_id: int, lang: str):
             (user_id, lang)
         )
         await db.commit()
+
+# ============================================
+# СООБЩЕНИЯ И КОНТЕКСТ
+# ============================================
 
 async def save_message(user_id: int, role: str, content: str):
     async with aiosqlite.connect(DATABASE_URL) as db:
@@ -72,6 +102,10 @@ async def get_context(user_id: int, limit: int = 10):
         messages = await cursor.fetchall()
         return [{"role": msg[0], "content": msg[1]} for msg in reversed(messages)]
 
+# ============================================
+# НАСТРОЕНИЯ
+# ============================================
+
 async def save_mood(user_id: int, mood: str):
     async with aiosqlite.connect(DATABASE_URL) as db:
         await db.execute("INSERT INTO moods (user_id, mood) VALUES (?, ?)", (user_id, mood))
@@ -84,6 +118,10 @@ async def get_mood_stats(user_id: int):
             (user_id,)
         )
         return await cursor.fetchall()
+
+# ============================================
+# ПОСЛЕДНЕЕ ВЗАИМОДЕЙСТВИЕ
+# ============================================
 
 async def get_last_interaction(user_id: int):
     async with aiosqlite.connect(DATABASE_URL) as db:
@@ -103,7 +141,7 @@ async def update_last_interaction(user_id: int):
         await db.commit()
 
 # ============================================
-# 💳 ПОДПИСКА
+# ПОДПИСКА
 # ============================================
 
 async def get_subscription_status(user_id: int):
@@ -129,7 +167,6 @@ async def is_subscribed(user_id: int) -> bool:
     if user_id == 862373702:
         return True
     
-    # Для остальных — обычная проверка
     sub_end = await get_subscription_status(user_id)
     if not sub_end:
         return False
@@ -148,7 +185,7 @@ async def get_users_without_subscription():
         return await cursor.fetchall()
 
 # ============================================
-# 📮 НАПОМИНАНИЯ
+# НАПОМИНАНИЯ
 # ============================================
 
 async def update_last_reminder(user_id: int):
@@ -169,7 +206,7 @@ async def get_last_reminder(user_id: int):
         return result[0] if result else None
 
 # ============================================
-# 🚧 ЛИМИТЫ СООБЩЕНИЙ
+# ЛИМИТЫ СООБЩЕНИЙ
 # ============================================
 
 async def get_messages_today(user_id: int) -> int:
@@ -215,12 +252,70 @@ async def increment_messages_today(user_id: int):
         await db.commit()
 
 # ============================================
-# 🗑️ УДАЛЕНИЕ ДАННЫХ
+# УДАЛЕНИЕ ДАННЫХ
 # ============================================
 
 async def delete_user_data(user_id: int):
     async with aiosqlite.connect(DATABASE_URL) as db:
         await db.execute("DELETE FROM messages WHERE user_id = ?", (user_id,))
         await db.execute("DELETE FROM moods WHERE user_id = ?", (user_id,))
-        await db.execute("DELETE FROM users WHERE user_id = ?", (user_id,))
+        await db.execute("DELETE FROM user_fsm WHERE user_id = ?", (user_id,))
+        await db.execute("DELETE FROM fable_events WHERE user_id = ?", (user_id,))
+        await db.execute(
+            "UPDATE users SET tale1_seen = 0, messages_today = 0, "
+            "last_message_date = NULL, subscription_end = NULL, "
+            "last_seen = NULL, last_reminder = NULL WHERE user_id = ?",
+            (user_id,)
+        )
+        await db.commit()
+
+# ============================================
+# СКАЗКА: FSM И ЛОГИРОВАНИЕ ВОРОНКИ
+# ============================================
+
+async def set_tale_step(user_id: int, step: int):
+    """Сохранить текущий шаг сказки"""
+    async with aiosqlite.connect(DATABASE_URL) as db:
+        await db.execute(
+            "INSERT OR REPLACE INTO user_fsm (user_id, tale_step) VALUES (?, ?)",
+            (user_id, step)
+        )
+        await db.commit()
+
+async def get_tale_step(user_id: int) -> int:
+    """Получить текущий шаг сказки"""
+    async with aiosqlite.connect(DATABASE_URL) as db:
+        async with db.execute(
+            "SELECT tale_step FROM user_fsm WHERE user_id = ?",
+            (user_id,)
+        ) as cursor:
+            row = await cursor.fetchone()
+            return row[0] if row else 0
+
+async def set_tale1_seen(user_id: int):
+    """Отметить, что пользователь видел сказку 1"""
+    async with aiosqlite.connect(DATABASE_URL) as db:
+        await db.execute(
+            "UPDATE users SET tale1_seen = 1 WHERE user_id = ?",
+            (user_id,)
+        )
+        await db.commit()
+
+async def is_tale1_seen(user_id: int) -> bool:
+    """Проверить, видел ли пользователь сказку 1"""
+    async with aiosqlite.connect(DATABASE_URL) as db:
+        async with db.execute(
+            "SELECT tale1_seen FROM users WHERE user_id = ?",
+            (user_id,)
+        ) as cursor:
+            row = await cursor.fetchone()
+            return bool(row and row[0])
+
+async def log_fable_event(user_id: int, event: str):
+    """Записать событие воронки сказки"""
+    async with aiosqlite.connect(DATABASE_URL) as db:
+        await db.execute(
+            "INSERT INTO fable_events (user_id, event, timestamp) VALUES (?, ?, ?)",
+            (user_id, event, datetime.now().isoformat())
+        )
         await db.commit()

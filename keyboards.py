@@ -77,13 +77,14 @@ TRANSLATIONS = {
 
 def get_language_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🇷🇺 Русский", callback_data="lang_ru")],
-        [InlineKeyboardButton(text="🇬🇧 English", callback_data="lang_en")]
+        [InlineKeyboardButton(text="\U0001F1F7\U0001F1FA Русский", callback_data="lang_ru")],
+        [InlineKeyboardButton(text="\U0001F1EC\U0001F1E7 English", callback_data="lang_en")]
     ])
 
 def get_main_menu_keyboard(lang: str = "ru"):
     t = TRANSLATIONS.get(lang, TRANSLATIONS["ru"])
     return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🪶 Тёмные сказки" if lang == "ru" else "🪶 Dark Tales", callback_data="tale_start")],
         [InlineKeyboardButton(text=t["stop_world"], callback_data="session_stop_world")],
         [InlineKeyboardButton(text=t["death"], callback_data="session_death")],
         [InlineKeyboardButton(text=t["heart"], callback_data="session_heart")],
@@ -155,4 +156,76 @@ def get_payment_keyboard(lang: str = "ru"):
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text=t["paid_btn"], callback_data="payment_done")],
         [InlineKeyboardButton(text=t["cancel_btn"], callback_data="main_menu")]
+    ])
+
+def get_fable_minute_button(lang: str = "ru"):
+    """Кнопка после минуты практики"""
+    if lang == "en":
+        text = " I did the minute"
+    else:
+        text = "🪶 Я сделал минуту"
+    
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=text, callback_data="fable_minute_done")]
+    ])
+
+def get_fable_cover_keyboard():
+    """Обложка — без кнопок, автопереход"""
+    return None  # Автопереход на P1
+
+def get_fable_p1_keyboard(lang: str = "ru"):
+    """Кнопка под P1 — снять следующий покров"""
+    text = "🪶 Снять следующий покров" if lang == "ru" else "🪶 Unveil next layer"
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=text, callback_data="t1_p2")]
+    ])
+
+def get_fable_p2_keyboard(lang: str = "ru"):
+    """Кнопка под P2"""
+    text = "🪶 Снять следующий покров" if lang == "ru" else " Unveil next layer"
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=text, callback_data="t1_p3")]
+    ])
+
+def get_fable_p3_keyboard(lang: str = "ru"):
+    """Кнопка под P3 — перейти к практике"""
+    text = " Перейти к практике" if lang == "ru" else "🕯 Go to practice"
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=text, callback_data="t1_practice")]
+    ])
+
+def get_fable_do_keyboard(lang: str = "ru"):
+    """Кнопка под DO — я сделал минуту"""
+    text = "🪶 Я сделал минуту" if lang == "ru" else " I did the minute"
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=text, callback_data="t1_done")]
+    ])
+
+def get_fable_end_keyboard(lang: str = "ru"):
+    """Кнопки под END — вторая сказка + меню"""
+    text_next = " Открыть вторую сказку" if lang == "ru" else "🔥 Open second tale"
+    text_menu = "↩ В главное меню" if lang == "ru" else " To main menu"
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=text_next, callback_data="t1_next")],
+        [InlineKeyboardButton(text=text_menu, callback_data="menu")]
+    ])
+
+def get_fable_soon_keyboard(lang: str = "ru"):
+    """Кнопка под SOON — только меню"""
+    text_menu = "↩ В главное меню" if lang == "ru" else "↩ To main menu"
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=text_menu, callback_data="menu")]
+    ])
+
+def get_fable_done_marker(lang: str = "ru"):
+    """Заглушка вместо нажатой кнопки (✓)"""
+    text = "✓ Прочитано" if lang == "ru" else "✓ Read"
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=text, callback_data="noop")]
+    ])
+
+def get_noop_keyboard():
+    """Пустая клавиатура для noop"""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="·", callback_data="noop")]
     ])

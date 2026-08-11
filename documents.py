@@ -21,8 +21,8 @@ POLICY_RU = """
 • Чтобы бот мог говорить с тобой
 • Чтобы помнить контекст вашего разговора
 • Чтобы улучшать путь
-• **НЕ передаём** третьим лицам
-• **НЕ используем** для рекламы
+• НЕ передаём третьим лицам
+• НЕ используем для рекламы
 
 **4. Хранение**
 Твои данные хранятся на защищённых серверах, пока ты идёшь путём.
@@ -51,9 +51,9 @@ TERMS_RU = """
 • Премиум-подписку (платно)
 
 **3. Важные предупреждения**
-️ Этот бот — **не замена** психотерапевту или врачу.
-⚠️ При серьёзных расстройствах — ищи специалиста.
-⚠️ В экстренных случаях: 8-800-2000-122.
+Этот бот — **не замена** психотерапевту или врачу.
+При серьёзных расстройствах — ищи специалиста.
+В экстренных случаях: 8-800-2000-122.
 
 **4. Ответственность воина**
 Ты сам несёшь ответственность за то, как применяешь полученные знания. Воин не перекладывает вину.
@@ -91,7 +91,7 @@ OFFER_RU = """
 Через Telegram Payments или переводом. Доступ открывается сразу после оплаты.
 
 **4. Возврат**
-⚠️ **Возврата нет.** Как только ты получил доступ к цифровому знанию — услуга считается оказанной. Воин знает, на что идёт.
+Возврата нет. Как только ты получил доступ к цифровому знанию — услуга считается оказанной. Воин знает, на что идёт.
 
 **5. Срок**
 Подписка действует с момента оплаты до конца выбранного периода.
@@ -108,10 +108,10 @@ Email: koritzina@mail.ru
 """
 
 POLICY_EN = """
- **SCROLL OF SECRECY**
+🔒 **SCROLL OF SECRECY**
 (Privacy Policy)
 
-*"The warrior keeps secrets. What is said on the path, stays on the path."*
+*\"The warrior keeps secrets. What is said on the path, stays on the path.\"*
 
 **1. Who guards your secrets**
 Operator: IE Koritsyna Yulia Alexandrovna, TIN 471303791704.
@@ -144,7 +144,7 @@ TERMS_EN = """
 📋 **WARRIOR'S CODE**
 (Terms of Service)
 
-*"The warrior knows the rules of the path. He accepts them freely, without coercion."*
+*\"The warrior knows the rules of the path. He accepts them freely, without coercion.\"*
 
 **1. The threshold**
 By entering this bot, you confirm you are **18 years or older**. The warrior's path is not for children. It requires maturity.
@@ -156,9 +156,9 @@ By entering this bot, you confirm you are **18 years or older**. The warrior's p
 • Premium subscription (paid)
 
 **3. Important warnings**
-️ This bot is **NOT a replacement** for a therapist or doctor.
-⚠️ For serious disorders — seek a specialist.
-⚠️ In emergencies: 8-800-2000-122.
+This bot is **NOT a replacement** for a therapist or doctor.
+For serious disorders — seek a specialist.
+In emergencies: 8-800-2000-122.
 
 **4. Warrior's responsibility**
 You bear full responsibility for how you apply the knowledge received.
@@ -173,7 +173,7 @@ OFFER_EN = """
 📜 **PACT WITH THE EAGLE**
 (Public Offer for Subscription)
 
-*"The Eagle grants power to those who accept its conditions. Without bargaining, without doubt."*
+*\"The Eagle grants power to those who accept its conditions. Without bargaining, without doubt.\"*
 
 IE Koritsyna Yulia Alexandrovna, TIN 471303791704, OGRNIP 322784700197941, offers access to premium practices.
 
@@ -189,7 +189,7 @@ You receive access to hidden practices for the chosen period.
 Via Telegram Payments or bank transfer. Access opens immediately after payment.
 
 **4. Refunds**
-⚠️ **No refunds.** Once you receive access to digital knowledge — the service is rendered. The warrior knows what he undertakes.
+No refunds. Once you receive access to digital knowledge — the service is rendered. The warrior knows what he undertakes.
 
 **5. Duration**
 Subscription is valid from payment until the end of the chosen period.

@@ -4,7 +4,7 @@ import datetime
 import requests
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
-from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, LabeledPrice
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
 from datetime import datetime, timedelta, timezone
@@ -59,7 +59,7 @@ YOUR_ID = 862373702
 FREE_MESSAGES_LIMIT = 5
 
 # Твой file_id обложки уже вставлен в код ниже
-COVER_FILE_ID = "https://raw.githubusercontent.com/Yuli_kor/castaneda_bot/main/images/fable_cover.png"
+COVER_FILE_ID = "https://raw.githubusercontent.com/ulicocompany-netizen/castaneda_bot/main/images/fable_cover.png"
 
 def get_time_theme(lang="ru"):
     utc_now = datetime.now(timezone.utc)
@@ -231,15 +231,15 @@ async def cmd_subscribe(message: types.Message):
         text = text_en if user_lang == "en" else text_ru
     await message.answer(text, reply_markup=get_subscription_keyboard(user_lang), parse_mode="Markdown")
 
-@dp.message(Command("my_subscription"))
-async def cmd_my_subscription(message: types.Message):
-    user_lang = await get_user_lang(message.from_user.id)
-    user_id = message.from_user.id
+@dp.callback_query(lambda c: c.data == "my_subscription")
+async def my_subscription(callback: CallbackQuery):
+    user_id, user_lang = callback.from_user.id, await get_user_lang(callback.from_user.id)
     if await is_subscribed(user_id):
         text = "✅ **Subscription active**\n\n🪶 The path is open." if user_lang == "en" else "✅ **Подписка активна**\n\n🪶 Путь открыт."
     else:
         text = "❌ **Subscription inactive**\n\n→ /subscribe" if user_lang == "en" else "❌ **Подписка не активна**\n\n→ /subscribe"
-    await message.answer(text, parse_mode="Markdown")
+    await callback.message.answer(text, parse_mode="Markdown")
+    await callback.answer()
 
 @dp.message(Command("approve"))
 async def cmd_approve(message: types.Message):
@@ -549,6 +549,8 @@ async def subscribe_choose(callback: CallbackQuery):
     text = text_en if user_lang == "en" else text_ru
     await save_message(user_id, "system", f"subscription_plan_{plan}")
     await callback.message.answer(text, reply_markup=get_payment_keyboard(user_lang), parse_mode="Markdown")
+    stars_btn = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="⭐ Оплатить Telegram Stars" if user_lang == "ru" else "⭐ Pay with Telegram Stars", callback_data=f"stars_{plan}")]])
+    await callback.message.answer("💫 Или оплати звёздами прямо в Telegram — подписка активируется мгновенно:" if user_lang == "ru" else "💫 Or pay with Telegram Stars — subscription activates instantly:", reply_markup=stars_btn)
     await callback.answer()
 
 @dp.callback_query(lambda c: c.data == "payment_done")
@@ -567,6 +569,51 @@ async def payment_done(callback: CallbackQuery):
     
     await callback.message.answer(text, parse_mode="Markdown")
     await callback.answer()
+
+# ============================================
+# 3.1 ОПЛАТА TELEGRAM STARS (АВТО)
+# ============================================
+
+STARS_PLANS = {
+    "1": {"stars": 100, "days": 30, "name_ru": "1 луна", "name_en": "1 moon"},
+    "3": {"stars": 250, "days": 90, "name_ru": "3 луны", "name_en": "3 moons"},
+    "6": {"stars": 400, "days": 180, "name_ru": "6 лун", "name_en": "6 moons"},
+}
+
+@dp.callback_query(lambda c: c.data.startswith("stars_"))
+async def pay_with_stars(callback: CallbackQuery):
+    plan = callback.data.replace("stars_", "")
+    p = STARS_PLANS.get(plan, STARS_PLANS["1"])
+    user_lang = await get_user_lang(callback.from_user.id)
+    name = p["name_en"] if user_lang == "en" else p["name_ru"]
+    await callback.message.answer_invoice(
+        title=f"🌟 {name}",
+        description=f"Подписка «Путь воина» на {p['days']} дней" if user_lang == "ru" else f"Warrior's Path subscription for {p['days']} days",
+        payload=f"stars_{plan}",
+        provider_token="",
+        currency="XTR",
+        prices=[LabeledPrice(label=name, amount=p["stars"])],
+    )
+    await callback.answer()
+
+@dp.pre_checkout_query()
+async def pre_checkout(query: types.PreCheckoutQuery):
+    await query.answer(ok=True)
+
+@dp.message(F.successful_payment)
+async def on_successful_payment(message: types.Message):
+    payment = message.successful_payment
+    plan = payment.invoice_payload.replace("stars_", "")
+    p = STARS_PLANS.get(plan, STARS_PLANS["1"])
+    await set_subscription(message.from_user.id, p["days"])
+    user_lang = await get_user_lang(message.from_user.id)
+    text = f"🎉 **Оплата получена!**\n\n🪶 Подписка активна на {p['days']} дней. Путь открыт!" if user_lang == "ru" else f"🎉 **Payment received!**\n\n🪶 Subscription active for {p['days']} days. The path is open!"
+    await message.answer(text, parse_mode="Markdown")
+    try:
+        await bot.send_message(YOUR_ID, f"💫 **Оплата Stars!**\n\n👤 ID: {message.from_user.id}\n📋 Тариф: {p['days']} дней\n⭐ Звёзд: {payment.total_amount}")
+    except:
+        pass
+
 
 @dp.callback_query(lambda c: c.data == "my_subscription")
 async def my_subscription(callback: CallbackQuery):

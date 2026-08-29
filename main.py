@@ -35,6 +35,7 @@ from documents import (
     POLICY_EN, TERMS_EN, OFFER_EN
 )
 from reminders import get_random_reminder, should_send_reminder
+from voices import send_raven_voice
 from fables import (
     COVER_CAPTION_RU, COVER_CAPTION_EN,
     P1_RU, P1_EN, P2_RU, P2_EN, P3_RU, P3_EN,
@@ -45,6 +46,8 @@ load_dotenv()
 
 bot = Bot(token=os.getenv("BOT_TOKEN"))
 dp = Dispatcher()
+from features import register_features
+register_features(dp, bot)
 
 deepseek_client = AsyncOpenAI(
     api_key=os.getenv("DEEPSEEK_API_KEY"),
@@ -57,6 +60,12 @@ openai_client = AsyncOpenAI(
 
 YOUR_ID = 862373702
 FREE_MESSAGES_LIMIT = 5
+# Безопасный ответ на callback (не падает при таймауте)
+async def safe_answer(callback, **kwargs):
+    try:
+        await callback.answer(**kwargs)
+    except Exception:
+        pass
 
 # Твой file_id обложки уже вставлен в код ниже
 COVER_FILE_ID = "https://raw.githubusercontent.com/ulicocompany-netizen/castaneda_bot/main/images/fable_cover.png"
@@ -226,8 +235,8 @@ async def cmd_subscribe(message: types.Message):
     if await is_subscribed(user_id):
         text = "✅ **Subscription active**\n\n🪶 The path is open." if user_lang == "en" else "✅ **Подписка активна**\n\n🪶 Путь открыт."
     else:
-        text_ru = "🌟 **ПРЕМИУМ-ПОДПИСКА**\n\n🔓 Видение снов, Намерение, Безлимитные сообщения.\n\n💰 1 луна — 990₽ | 3 луны — 2490₽ | 6 лун — 3990₽\n\nВыбери свой путь:"
-        text_en = "🌟 **PREMIUM SUBSCRIPTION**\n\n🔓 Dreaming, Intention, Unlimited messages.\n\n💰 1 moon — 990₽ | 3 moons — 2490₽ | 6 moons — 3990₽\n\nChoose your path:"
+        text_ru = "🌟 **ПРЕМИУМ-ПОДПИСКА**\n\n🔓 Видение снов, Намерение, Безлимитные сообщения.\n\n💰 🌒 1 луна — 990₽ | 🌓 3 луны — 2490₽ | 🌔 6 лун — 3990₽"
+        text_en = "🌟 **PREMIUM SUBSCRIPTION**\n\n🔓 Dreaming, Intention, Unlimited messages.\n\n💰 🌒 1 moon — 990₽ | 🌓 3 moons — 2490₽ | 🌔 6 moons — 3990₽"
         text = text_en if user_lang == "en" else text_ru
     await message.answer(text, reply_markup=get_subscription_keyboard(user_lang), parse_mode="Markdown")
 
@@ -239,7 +248,7 @@ async def my_subscription(callback: CallbackQuery):
     else:
         text = "❌ **Subscription inactive**\n\n→ /subscribe" if user_lang == "en" else "❌ **Подписка не активна**\n\n→ /subscribe"
     await callback.message.answer(text, parse_mode="Markdown")
-    await callback.answer()
+    await safe_answer(callback)
 
 @dp.message(Command("approve"))
 async def cmd_approve(message: types.Message):
@@ -284,7 +293,7 @@ async def tale_start(callback: CallbackQuery):
     except Exception as e:
         print(f"❌ ОШИБКА ОТПРАВКИ ФОТО (tale_start): {e}")
         await callback.message.answer(f"⚠️ Ошибка загрузки обложки: {e}\n\nПопробуй получить file_id заново.")
-    await callback.answer()
+    await safe_answer(callback)
 
 @dp.callback_query(lambda c: c.data == "start_journey")
 async def start_journey(callback: CallbackQuery):
@@ -318,66 +327,66 @@ async def start_journey(callback: CallbackQuery):
             await callback.message.answer_photo(photo=theme["photo_url"], caption=text, reply_markup=get_documents_keyboard(user_lang), parse_mode="Markdown")
         except:
             await callback.message.answer(text, reply_markup=get_documents_keyboard(user_lang), parse_mode="Markdown")
-    await callback.answer()
+    await safe_answer(callback)
 
 @dp.callback_query(lambda c: c.data == "t1_p2")
 async def fable_t1_p2(callback: CallbackQuery):
     user_id, user_lang = callback.from_user.id, await get_user_lang(callback.from_user.id)
-    if await get_tale_step(user_id) >= 2: return await callback.answer()
+    if await get_tale_step(user_id) >= 2: return await safe_answer(callback)
     try: await callback.message.edit_reply_markup(reply_markup=get_fable_done_marker(user_lang))
     except: pass
     await set_tale_step(user_id, 2)
     await log_fable_event(user_id, "read2")
     await callback.message.answer(P2_EN if user_lang == "en" else P2_RU, reply_markup=get_fable_p2_keyboard(user_lang), parse_mode="HTML")
-    await callback.answer()
+    await safe_answer(callback)
 
 @dp.callback_query(lambda c: c.data == "t1_p3")
 async def fable_t1_p3(callback: CallbackQuery):
     user_id, user_lang = callback.from_user.id, await get_user_lang(callback.from_user.id)
-    if await get_tale_step(user_id) >= 3: return await callback.answer()
+    if await get_tale_step(user_id) >= 3: return await safe_answer(callback)
     try: await callback.message.edit_reply_markup(reply_markup=get_fable_done_marker(user_lang))
     except: pass
     await set_tale_step(user_id, 3)
     await log_fable_event(user_id, "read3")
     await callback.message.answer(P3_EN if user_lang == "en" else P3_RU, reply_markup=get_fable_p3_keyboard(user_lang), parse_mode="HTML")
-    await callback.answer()
+    await safe_answer(callback)
 
 @dp.callback_query(lambda c: c.data == "t1_practice")
 async def fable_t1_practice(callback: CallbackQuery):
     user_id, user_lang = callback.from_user.id, await get_user_lang(callback.from_user.id)
-    if await get_tale_step(user_id) >= 4: return await callback.answer()
+    if await get_tale_step(user_id) >= 4: return await safe_answer(callback)
     try: await callback.message.edit_reply_markup(reply_markup=get_fable_done_marker(user_lang))
     except: pass
     await set_tale_step(user_id, 4)
     await log_fable_event(user_id, "practice")
     await callback.message.answer(DO_EN if user_lang == "en" else DO_RU, reply_markup=get_fable_do_keyboard(user_lang), parse_mode="HTML")
-    await callback.answer()
+    await safe_answer(callback)
 
 @dp.callback_query(lambda c: c.data == "t1_done")
 async def fable_t1_done(callback: CallbackQuery):
     user_id, user_lang = callback.from_user.id, await get_user_lang(callback.from_user.id)
-    if await get_tale_step(user_id) >= 5: return await callback.answer()
+    if await get_tale_step(user_id) >= 5: return await safe_answer(callback)
     try: await callback.message.edit_reply_markup(reply_markup=get_fable_done_marker(user_lang))
     except: pass
     await set_tale_step(user_id, 5)
     await log_fable_event(user_id, "done")
     await callback.message.answer(END_EN if user_lang == "en" else END_RU, reply_markup=get_fable_end_keyboard(user_lang), parse_mode="HTML")
-    await callback.answer()
+    await safe_answer(callback)
 
 @dp.callback_query(lambda c: c.data == "t1_next")
 async def fable_t1_next(callback: CallbackQuery):
     user_id, user_lang = callback.from_user.id, await get_user_lang(callback.from_user.id)
-    if await get_tale_step(user_id) >= 6: return await callback.answer()
+    if await get_tale_step(user_id) >= 6: return await safe_answer(callback)
     try: await callback.message.edit_reply_markup(reply_markup=get_fable_done_marker(user_lang))
     except: pass
     await set_tale_step(user_id, 6)
     await log_fable_event(user_id, "want2")
     await callback.message.answer(SOON_EN if user_lang == "en" else SOON_RU, reply_markup=get_fable_soon_keyboard(user_lang), parse_mode="HTML")
-    await callback.answer()
+    await safe_answer(callback)
 
 @dp.callback_query(lambda c: c.data == "noop")
 async def noop_handler(callback: CallbackQuery):
-    await callback.answer()
+    await safe_answer(callback)
 
 # ============================================
 # 3. ОСТАЛЬНЫЕ CALLBACKS
@@ -389,7 +398,7 @@ async def age_confirmed(callback: CallbackQuery):
     await save_message(user_id, "system", "age_confirmed")
     try:
         await callback.message.answer_video(
-            video="BAACAgIAAxkBAAEsuxVqYg00AYskB59uAAHPgYnKu32nRzEAAm6nAAITkhhLYFzDv0GZ37w9BA",
+            video="https://raw.githubusercontent.com/ulicocompany-netizen/castaneda_bot/main/welcome.mp4",
             caption="🪶 Твой путь начинается здесь...",
             reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🦅 Я готов начать путь", callback_data="start_journey")]]),
             parse_mode="Markdown"
@@ -400,7 +409,7 @@ async def age_confirmed(callback: CallbackQuery):
             "🪶 Твой путь начинается здесь... (видео не загрузилось, но ты можешь продолжить)",
             reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🦅 Я готов начать путь", callback_data="start_journey")]])
         )
-    await callback.answer()
+    await safe_answer(callback)
 
 @dp.callback_query(lambda c: c.data.startswith("lang_"))
 async def process_language(callback: CallbackQuery):
@@ -411,7 +420,7 @@ async def process_language(callback: CallbackQuery):
     lang_names = {"ru": "🇷🇺 Русский", "en": "🇬🇧 English"}
     text = f"✅ Language set: {lang_names.get(lang, lang)}\n\n{theme['emoji']} Now, please confirm your age by clicking the button below 👇" if lang == "en" else f"✅ Язык установлен: {lang_names.get(lang, lang)}\n\n{theme['emoji']} Теперь, пожалуйста, подтверди свой возраст, нажав кнопку ниже 👇"
     await callback.message.answer(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="✅ Мне есть 18 / I am 18+", callback_data="age_yes")]]), parse_mode="Markdown")
-    await callback.answer()
+    await safe_answer(callback)
 
 @dp.callback_query(lambda c: c.data.startswith("session_"))
 async def process_session(callback: CallbackQuery):
@@ -420,20 +429,20 @@ async def process_session(callback: CallbackQuery):
     if session_type in ["dreams", "intention"] and not await is_subscribed(user_id):
         text = "🔒 **This practice requires subscription**\n\n🌟 Subscribe to unlock them.\n\n→ /subscribe" if user_lang == "en" else "🔒 **Эта практика доступна по подписке**\n\n🌟 Оформи подписку, чтобы открыть их.\n\n→ /subscribe"
         await callback.message.answer(text, parse_mode="Markdown")
-        return await callback.answer()
+        return await safe_answer(callback)
     
     sessions_ru = {"stop_world": "🌑 **Остановить мир**\n\nОпиши ситуацию, которая заела.", "death": "💀 **Разговор со смертью**\n\nЧто бы ты сделал иначе, если бы знал, что это последний день?", "heart": "❤️ **Путь с сердцем**\n\nЕсть ли радость в том, что ты делаешь?", "dreams": "🦅 **Видение снов**\n\nРасскажи свой сон.", "intention": "⚡ **Намерение**\n\nСформулируй своё намерение."}
     sessions_en = {"stop_world": "🌑 **Stop the World**\n\nDescribe the situation that's stuck.", "death": "💀 **Talk with Death**\n\nWhat would you do differently if today was your last day?", "heart": "❤️ **Path with Heart**\n\nIs there joy in what you're doing?", "dreams": "🦅 **Dreaming**\n\nTell me your dream.", "intention": "⚡ **Intention**\n\nFormulate your intention."}
     sessions = sessions_en if user_lang == "en" else sessions_ru
     await callback.message.answer(sessions.get(session_type, "🤔 Выбери практику из меню"), parse_mode="Markdown")
-    await callback.answer()
+    await safe_answer(callback)
 
 @dp.callback_query(lambda c: c.data == "mood_check")
 async def mood_check(callback: CallbackQuery):
     user_lang = await get_user_lang(callback.from_user.id)
     text = "😊 **How do you feel?**" if user_lang == "en" else "😊 **Как ты себя чувствуешь?**"
     await callback.message.answer(text, reply_markup=get_mood_keyboard(user_lang), parse_mode="Markdown")
-    await callback.answer()
+    await safe_answer(callback)
 
 @dp.callback_query(lambda c: c.data.startswith("mood_") and c.data != "mood_check")
 async def mood_select(callback: CallbackQuery):
@@ -444,14 +453,14 @@ async def mood_select(callback: CallbackQuery):
     responses_en = {"good": "😊 Glad you're doing well!", "ok": "😐 Okay is also a path.", "bad": "😔 I hear you. Tell me what happened?", "anxiety": "😰 Anxiety is wind. Let's breathe together?"}
     responses = responses_en if user_lang == "en" else responses_ru
     await callback.message.answer(responses.get(mood, "I understand you."))
-    await callback.answer()
+    await safe_answer(callback)
 
 @dp.callback_query(lambda c: c.data == "breathing")
 async def breathing_menu(callback: CallbackQuery):
     user_lang = await get_user_lang(callback.from_user.id)
     text = "🧘 **Choose breathing technique:**\n\n🌊 **4-7-8**\n🌬️ **Equal breathing**\n🔥 **Fire breathing**" if user_lang == "en" else "🧘 **Выбери дыхательную практику:**\n\n🌊 **4-7-8**\n🌬️ **Равное дыхание**\n🔥 **Огненное дыхание**"
     await callback.message.answer(text, reply_markup=get_breathing_keyboard(user_lang), parse_mode="Markdown")
-    await callback.answer()
+    await safe_answer(callback)
 
 @dp.callback_query(lambda c: c.data.startswith("breathe_"))
 async def breathing_exercise(callback: CallbackQuery):
@@ -461,7 +470,7 @@ async def breathing_exercise(callback: CallbackQuery):
     exercises_en = {"478": "**4-7-8 Technique**\n\n1. Inhale — 4s\n2. Hold — 7s\n3. Exhale — 8s\n\nRepeat 4 times. 💤", "equal": "🌬️ **Equal Breathing**\n\n1. Inhale — 4s\n2. Exhale — 4s\n\nRepeat 5-10 times. ⚖️", "fire": "🔥 **Fire Breathing**\n\nSharp exhale through nose, inhale automatically. Pace: 1-2 cycles/sec. Do for 30s. ⚡"}
     exercises = exercises_en if user_lang == "en" else exercises_ru
     await callback.message.answer(exercises.get(exercise, "Choose an exercise."), parse_mode="Markdown")
-    await callback.answer()
+    await safe_answer(callback)
 
 @dp.callback_query(lambda c: c.data == "consultation")
 async def consultation_menu(callback: CallbackQuery):
@@ -469,7 +478,7 @@ async def consultation_menu(callback: CallbackQuery):
     text_ru = "👤 **Личная консультация**\n\n💬 **Текстовая (30 мин) — 1500₽**\n🎙️ **Голосовая (60 мин) — 3000₽**\n\nВыбери формат:"
     text_en = "👤 **Personal Consultation**\n\n💬 **Text (30 min) — 1500₽**\n🎙️ **Voice (60 min) — 3000₽**\n\nChoose format:"
     await callback.message.answer(text_en if user_lang == "en" else text_ru, reply_markup=get_consultation_keyboard(user_lang), parse_mode="Markdown")
-    await callback.answer()
+    await safe_answer(callback)
 
 @dp.callback_query(lambda c: c.data in ["consult_text", "consult_voice"])
 async def book_consult(callback: CallbackQuery):
@@ -484,20 +493,20 @@ async def book_consult(callback: CallbackQuery):
     
     ans = f"✅ **Заявка отправлена!**\n\n🪶 Ты выбрал: {type_name if user_lang=='ru' else type_name_en}\n\nЯ свяжусь с тобой в течение 24 часов."
     await callback.message.answer(ans, parse_mode="Markdown")
-    await callback.answer()
+    await safe_answer(callback)
 
 @dp.callback_query(lambda c: c.data == "consult_info")
 async def consult_info(callback: CallbackQuery):
     user_lang = await get_user_lang(callback.from_user.id)
     text = "ℹ️ **How it works:**\n\n1️⃣ Choose format\n2️⃣ Leave a request\n3️⃣ I contact you within 24h\n4️⃣ Payment before session" if user_lang == "en" else "ℹ️ **Как это работает:**\n\n1️⃣ Выбираешь формат\n2️⃣ Оставляешь заявку\n3️⃣ Я связываюсь в течение 24 часов\n4️⃣ Оплата до начала сессии"
     await callback.message.answer(text, reply_markup=get_consultation_keyboard(user_lang), parse_mode="Markdown")
-    await callback.answer()
+    await safe_answer(callback)
 
 @dp.callback_query(lambda c: c.data == "documents_menu")
 async def documents_menu(callback: CallbackQuery):
     user_lang = await get_user_lang(callback.from_user.id)
     await callback.message.answer("📜 **Свитки Пути:**" if user_lang == "ru" else "📜 **Path Scrolls:**", reply_markup=get_documents_keyboard(user_lang), parse_mode="Markdown")
-    await callback.answer()
+    await safe_answer(callback)
 
 @dp.callback_query(lambda c: c.data == "doc_privacy")
 async def show_privacy(callback: CallbackQuery):
@@ -506,7 +515,7 @@ async def show_privacy(callback: CallbackQuery):
     for i in range(0, len(text), 4000):
         try: await callback.message.answer(text[i:i+4000], parse_mode="Markdown")
         except: await callback.message.answer(text[i:i+4000])
-    await callback.answer()
+    await safe_answer(callback)
 
 @dp.callback_query(lambda c: c.data == "doc_terms")
 async def show_terms(callback: CallbackQuery):
@@ -515,7 +524,7 @@ async def show_terms(callback: CallbackQuery):
     for i in range(0, len(text), 4000):
         try: await callback.message.answer(text[i:i+4000], parse_mode="Markdown")
         except: await callback.message.answer(text[i:i+4000])
-    await callback.answer()
+    await safe_answer(callback)
 
 @dp.callback_query(lambda c: c.data == "doc_offer")
 async def show_offer(callback: CallbackQuery):
@@ -524,7 +533,7 @@ async def show_offer(callback: CallbackQuery):
     for i in range(0, len(text), 4000):
         try: await callback.message.answer(text[i:i+4000], parse_mode="Markdown")
         except: await callback.message.answer(text[i:i+4000])
-    await callback.answer()
+    await safe_answer(callback)
 
 @dp.callback_query(lambda c: c.data == "subscribe_menu")
 async def subscribe_menu(callback: CallbackQuery):
@@ -532,17 +541,17 @@ async def subscribe_menu(callback: CallbackQuery):
     if await is_subscribed(user_id):
         text = "✅ **Subscription active**\n\n🪶 The path is open." if user_lang == "en" else "✅ **Подписка активна**\n\n🪶 Путь открыт."
     else:
-        text_ru = "🌟 **ПРЕМИУМ-ПОДПИСКА**\n\n🔓 Видение снов, Намерение, Безлимитные сообщения.\n\n💰 1 луна — 990₽ | 3 луны — 2490₽ | 6 лун — 3990₽"
-        text_en = "🌟 **PREMIUM SUBSCRIPTION**\n\n🔓 Dreaming, Intention, Unlimited messages.\n\n💰 1 moon — 990₽ | 3 moons — 2490₽ | 6 moons — 3990₽"
+        text_ru = "🌟 **ПРЕМИУМ-ПОДПИСКА**\n\n🔓 Видение снов, Намерение, Безлимитные сообщения.\n\n💰 🌒 1 луна — 990₽ | 🌓 3 луны — 2490₽ | 🌔 6 лун — 3990₽"
+        text_en = "🌟 **PREMIUM SUBSCRIPTION**\n\n🔓 Dreaming, Intention, Unlimited messages.\n\n💰 🌒 1 moon — 990₽ | 🌓 3 moons — 2490₽ | 🌔 6 moons — 3990₽"
         text = text_en if user_lang == "en" else text_ru
     await callback.message.answer(text, reply_markup=get_subscription_keyboard(user_lang), parse_mode="Markdown")
-    await callback.answer()
+    await safe_answer(callback)
 
 @dp.callback_query(lambda c: c.data in ["sub_1", "sub_3", "sub_6"])
 async def subscribe_choose(callback: CallbackQuery):
     user_id, user_lang = callback.from_user.id, await get_user_lang(callback.from_user.id)
     plan = callback.data.replace("sub_", "")
-    plans = {"1": {"days": 30, "price": 990, "name_ru": "1 луна", "name_en": "1 moon"}, "3": {"days": 90, "price": 2490, "name_ru": "3 луны", "name_en": "3 moons"}, "6": {"days": 180, "price": 3990, "name_ru": "6 лун", "name_en": "6 moons"}}
+    plans = {"1": {"days": 30, "price": 990, "name_ru": "🌒 1 луна", "name_en": "🌒 1 moon"}, "3": {"days": 90, "price": 2490, "name_ru": "🌓 3 луны", "name_en": "🌓 3 moons"}, "6": {"days": 180, "price": 3990, "name_ru": "🌔 6 лун", "name_en": "🌔 6 moons"}}
     p = plans[plan]
     text_ru = f"📜 **Договор с Орлом**\n\nТы выбрал: **{p['name_ru']}** ({p['days']} дней)\n💰 Сумма: **{p['price']}₽**\n\n💳 Тинькофф: 5534 2000 5167 0180\n👤 Корытцына Ю.А.\n\nПосле оплаты нажми кнопку ниже."
     text_en = f"📜 **Pact with the Eagle**\n\nYou chose: **{p['name_en']}** ({p['days']} days)\n💰 Amount: **{p['price']}₽**\n\n💳 Tinkoff: 5534 2000 5167 0180\n👤 Koritsyna Y.A.\n\nAfter payment, click the button below."
@@ -551,7 +560,7 @@ async def subscribe_choose(callback: CallbackQuery):
     await callback.message.answer(text, reply_markup=get_payment_keyboard(user_lang), parse_mode="Markdown")
     stars_btn = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="⭐ Оплатить Telegram Stars" if user_lang == "ru" else "⭐ Pay with Telegram Stars", callback_data=f"stars_{plan}")]])
     await callback.message.answer("💫 Или оплати звёздами прямо в Telegram — подписка активируется мгновенно:" if user_lang == "ru" else "💫 Or pay with Telegram Stars — subscription activates instantly:", reply_markup=stars_btn)
-    await callback.answer()
+    await safe_answer(callback)
 
 @dp.callback_query(lambda c: c.data == "payment_done")
 async def payment_done(callback: CallbackQuery):
@@ -568,16 +577,16 @@ async def payment_done(callback: CallbackQuery):
         text = "✅ **Payment request accepted!**\n\n🪶 I'll check within 24h." if user_lang == "en" else "✅ **Заявка на оплату принята!**\n\n🪶 Я проверю оплату в течение 24 часов."
     
     await callback.message.answer(text, parse_mode="Markdown")
-    await callback.answer()
+    await safe_answer(callback)
 
 # ============================================
 # 3.1 ОПЛАТА TELEGRAM STARS (АВТО)
 # ============================================
 
 STARS_PLANS = {
-    "1": {"stars": 100, "days": 30, "name_ru": "1 луна", "name_en": "1 moon"},
-    "3": {"stars": 250, "days": 90, "name_ru": "3 луны", "name_en": "3 moons"},
-    "6": {"stars": 400, "days": 180, "name_ru": "6 лун", "name_en": "6 moons"},
+    "1": {"stars": 100, "days": 30, "name_ru": "🌒 1 луна", "name_en": "🌒 1 moon"},
+    "3": {"stars": 250, "days": 90, "name_ru": "🌓 3 луны", "name_en": "🌓 3 moons"},
+    "6": {"stars": 400, "days": 180, "name_ru": "🌔 6 лун", "name_en": "🌔 6 moons"},
 }
 
 @dp.callback_query(lambda c: c.data.startswith("stars_"))
@@ -594,7 +603,7 @@ async def pay_with_stars(callback: CallbackQuery):
         currency="XTR",
         prices=[LabeledPrice(label=name, amount=p["stars"])],
     )
-    await callback.answer()
+    await safe_answer(callback)
 
 @dp.pre_checkout_query()
 async def pre_checkout(query: types.PreCheckoutQuery):
@@ -620,7 +629,7 @@ async def my_subscription(callback: CallbackQuery):
     user_id, user_lang = callback.from_user.id, await get_user_lang(callback.from_user.id)
     text = "✅ **Subscription active**\n\n🪶 The path is open." if (await is_subscribed(user_id)) else ("❌ **Subscription inactive**\n\n→ /subscribe" if user_lang == "en" else "❌ **Подписка не активна**\n\n→ /subscribe")
     await callback.message.answer(text, parse_mode="Markdown")
-    await callback.answer()
+    await safe_answer(callback)
 
 @dp.callback_query(lambda c: c.data in ["main_menu", "menu"])
 async def back_to_menu(callback: CallbackQuery):
@@ -628,7 +637,7 @@ async def back_to_menu(callback: CallbackQuery):
     theme = get_time_theme(user_lang)
     text = f"{theme['emoji']} **Main Menu:**" if user_lang == "en" else f"{theme['emoji']} **Главное меню:**"
     await callback.message.answer(text, reply_markup=get_main_menu_keyboard(user_lang), parse_mode="Markdown")
-    await callback.answer()
+    await safe_answer(callback)
 
 # ============================================
 # 4. ОБЩИЙ ОБРАБОТЧИК ТЕКСТА
@@ -713,6 +722,7 @@ async def daily_reminder_loop():
                         user_lang = await get_user_lang(user_id)
                         last_reminder = await get_last_reminder(user_id)
                         if not should_send_reminder(last_reminder, days_interval=5): continue
+                        await send_raven_voice(bot, user_id, "click")
                         await bot.send_message(user_id, get_random_reminder(user_lang), parse_mode="Markdown")
                         await update_last_reminder(user_id)
                         sent_count += 1

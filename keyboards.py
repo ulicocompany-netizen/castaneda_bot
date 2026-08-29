@@ -81,21 +81,34 @@ def get_language_keyboard():
         [InlineKeyboardButton(text="\U0001F1EC\U0001F1E7 English", callback_data="lang_en")]
     ])
 
-def get_main_menu_keyboard(lang: str = "ru"):
-    t = TRANSLATIONS.get(lang, TRANSLATIONS["ru"])
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🪶 Тёмные сказки" if lang == "ru" else "🪶 Dark Tales", callback_data="tale_start")],
-        [InlineKeyboardButton(text=t["stop_world"], callback_data="session_stop_world")],
-        [InlineKeyboardButton(text=t["death"], callback_data="session_death")],
-        [InlineKeyboardButton(text=t["heart"], callback_data="session_heart")],
-        [InlineKeyboardButton(text=t["dreams"], callback_data="session_dreams")],
-        [InlineKeyboardButton(text=t["intention"], callback_data="session_intention")],
-        [InlineKeyboardButton(text=t["mood_check"], callback_data="mood_check")],
-        [InlineKeyboardButton(text=t["breathing"], callback_data="breathing")],
-        [InlineKeyboardButton(text=t["emergency"], callback_data="consultation")],
-        [InlineKeyboardButton(text=t["subscribe_btn"], callback_data="subscribe_menu")],
-        [InlineKeyboardButton(text=t["documents"], callback_data="documents_menu")]
-    ])
+def get_main_menu_keyboard(lang="ru"):
+    if lang == "en":
+        buttons = [
+            [InlineKeyboardButton(text="🪶 Dark Tales", callback_data="tale_start")],
+            [InlineKeyboardButton(text="🌑 Stop the World", callback_data="diagnose_force")],
+            [InlineKeyboardButton(text="💀 Talk with Death", callback_data="session_death")],
+            [InlineKeyboardButton(text="❤️ Path of the Heart · Practice of the Day", callback_data="daily_practice")],
+            [InlineKeyboardButton(text="🦅 Dream Seeing", callback_data="session_dreams")],
+            [InlineKeyboardButton(text="⚖️ Indulgimeter", callback_data="indulgimeter_start")],
+            [InlineKeyboardButton(text="📖 Warrior's Diary", callback_data="warrior_diary")],
+            [InlineKeyboardButton(text="👤 Consultation", callback_data="consultation")],
+            [InlineKeyboardButton(text="🌟 Subscribe", callback_data="subscribe_menu")],
+            [InlineKeyboardButton(text="📜 Scrolls of the Path", callback_data="documents_menu")],
+        ]
+    else:
+        buttons = [
+            [InlineKeyboardButton(text="🪶 Тёмные сказки", callback_data="tale_start")],
+            [InlineKeyboardButton(text="🌑 Остановить мир", callback_data="diagnose_force")],
+            [InlineKeyboardButton(text="💀 Разговор со смертью", callback_data="session_death")],
+            [InlineKeyboardButton(text="❤️ Путь сердца · Практика дня", callback_data="daily_practice")],
+            [InlineKeyboardButton(text="🦅 Видение снов", callback_data="session_dreams")],
+            [InlineKeyboardButton(text="⚖️ Индульгиметр", callback_data="indulgimeter_start")],
+            [InlineKeyboardButton(text="📖 Дневник воина", callback_data="warrior_diary")],
+            [InlineKeyboardButton(text="👤 Консультация", callback_data="consultation")],
+            [InlineKeyboardButton(text="🌟 Оформить подписку", callback_data="subscribe_menu")],
+            [InlineKeyboardButton(text="📜 Свитки Пути", callback_data="documents_menu")],
+        ]
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 def get_mood_keyboard(lang: str = "ru"):
     t = TRANSLATIONS.get(lang, TRANSLATIONS["ru"])
@@ -141,15 +154,24 @@ def get_age_keyboard(lang: str = "ru"):
         [InlineKeyboardButton(text=t["age_deny"], callback_data="age_no")]
     ])
 
-def get_subscription_keyboard(lang: str = "ru"):
-    t = TRANSLATIONS.get(lang, TRANSLATIONS["ru"])
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=t["sub_1"], callback_data="sub_1")],
-        [InlineKeyboardButton(text=t["sub_3"], callback_data="sub_3")],
-        [InlineKeyboardButton(text=t["sub_6"], callback_data="sub_6")],
-        [InlineKeyboardButton(text=t["my_sub"], callback_data="my_subscription")],
-        [InlineKeyboardButton(text=t["back"], callback_data="main_menu")]
-    ])
+def get_subscription_keyboard(lang="ru"):
+    if lang == "en":
+        buttons = [
+            [InlineKeyboardButton(text="🌒 1 moon — 990₽", callback_data="sub_1")],
+            [InlineKeyboardButton(text="🌓 3 moons — 2490₽", callback_data="sub_3")],
+            [InlineKeyboardButton(text="🌔 6 moons — 3990₽", callback_data="sub_6")],
+            [InlineKeyboardButton(text="📱 My subscription", callback_data="my_subscription")],
+            [InlineKeyboardButton(text="⬅️ Back", callback_data="main_menu")],
+        ]
+    else:
+        buttons = [
+            [InlineKeyboardButton(text="🌒 1 луна — 990₽", callback_data="sub_1")],
+            [InlineKeyboardButton(text="🌓 3 луны — 2490₽", callback_data="sub_3")],
+            [InlineKeyboardButton(text="🌔 6 лун — 3990₽", callback_data="sub_6")],
+            [InlineKeyboardButton(text="📱 Моя подписка", callback_data="my_subscription")],
+            [InlineKeyboardButton(text="⬅️ Назад", callback_data="main_menu")],
+        ]
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 def get_payment_keyboard(lang: str = "ru"):
     t = TRANSLATIONS.get(lang, TRANSLATIONS["ru"])

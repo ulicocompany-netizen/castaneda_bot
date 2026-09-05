@@ -43,11 +43,14 @@ from fables import (
 )
 
 load_dotenv()
+from aiogram.types import FSInputFile
 
 bot = Bot(token=os.getenv("BOT_TOKEN"))
 dp = Dispatcher()
 from features import register_features
 register_features(dp, bot)
+from analytics import register_analytics, get_media_file_id, set_media_file_id
+register_analytics(dp)
 
 deepseek_client = AsyncOpenAI(
     api_key=os.getenv("DEEPSEEK_API_KEY"),
@@ -100,10 +103,10 @@ async def process_text_message(message: types.Message, text: str):
     context = await get_context(user_id)
     user_lang = await get_user_lang(user_id)
     
-    if user_lang == "ru":
-        lang_instruction = "\n\n🔴 ВАЖНОЕ ПРАВИЛО:\n- Пользователь пишет на РУССКОМ языке\n- Ты ДОЛЖЕН отвечать ТОЛЬКО на РУССКОМ\n- НИКАКОГО английского в ответах"
+    if any("а" <= ch <= "я" or ch == "ё" for ch in message.text.lower()):
+        lang_instruction = "\n\n🔴 ВАЖНОЕ ПРАВИЛО:\n- Отвечай ТОЛЬКО на РУССКОМ"
     else:
-        lang_instruction = "\n\n IMPORTANT RULE:\n- User writes in ENGLISH\n- You MUST respond ONLY in ENGLISH\n- NO Russian in your answers"
+        lang_instruction = "\n\n IMPORTANT RULE:\n- Respond ONLY in ENGLISH"
     
     system_prompt = CASTANEDA_THERAPY_PROMPT + lang_instruction
     messages = [{"role": "system", "content": system_prompt}]
@@ -395,19 +398,31 @@ async def noop_handler(callback: CallbackQuery):
 @dp.callback_query(lambda c: c.data == "age_yes")
 async def age_confirmed(callback: CallbackQuery):
     user_id = callback.from_user.id
+    user_lang = await get_user_lang(user_id)
+    context = await get_context(user_id)
+    if any(msg["content"] == "age_confirmed" for msg in context):
+        await safe_answer(callback)
+        await callback.message.answer("🦅 Ты уже на пути, воин." if user_lang == "ru" else "🦅 You are already on the path, warrior.", reply_markup=get_main_menu_keyboard(user_lang))
+        return
     await save_message(user_id, "system", "age_confirmed")
     try:
-        await callback.message.answer_video(
-            video="https://raw.githubusercontent.com/ulicocompany-netizen/castaneda_bot/main/welcome.mp4",
-            caption="🪶 Твой путь начинается здесь...",
-            reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🦅 Я готов начать путь", callback_data="start_journey")]]),
+        await safe_answer(callback)
+        video_key = "welcome_en" if user_lang == "en" else "welcome_ru"
+        fid = await get_media_file_id(video_key)
+        video = fid if fid else (FSInputFile("welcome_en.mp4") if user_lang == "en" else FSInputFile("welcome.mp4"))
+        sent = await callback.message.answer_video(
+            video=video,
+            caption="🪶 Your path begins here..." if user_lang == "en" else "🪶 Твой путь начинается здесь...",
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🦅 I am ready to begin the path" if user_lang == "en" else "🦅 Я готов начать путь", callback_data="start_journey")]]),
             parse_mode="Markdown"
         )
+        if not fid and sent.video:
+            await set_media_file_id(video_key, sent.video.file_id)
     except Exception as e:
         print(f"❌ ОШИБКА ОТПРАВКИ ВИДЕО: {e}")
         await callback.message.answer(
-            "🪶 Твой путь начинается здесь... (видео не загрузилось, но ты можешь продолжить)",
-            reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🦅 Я готов начать путь", callback_data="start_journey")]])
+text="🪶 Your path begins here..." if user_lang == "en" else "🪶 Твой путь начинается здесь...",
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🦅 I am ready to begin the path" if user_lang == "en" else "🦅 Я готов начать путь", callback_data="start_journey")]])
         )
     await safe_answer(callback)
 

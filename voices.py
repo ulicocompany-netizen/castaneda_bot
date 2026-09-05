@@ -5,6 +5,8 @@ import os
 import random
 import aiosqlite
 from datetime import datetime
+from database import get_user_lang
+from database import get_user_lang
 
 DB_PATH = "bot.db"
 VOICES_DIR = "voices"
@@ -67,6 +69,8 @@ def _audio_files(folder):
 async def send_raven_voice(bot, user_id, trigger):
     """Одно голосовое в день по триггеру. Если файла нет — молча пропускает."""
     try:
+        if await get_user_lang(user_id) == "en":
+            return
         if not await _can_send(user_id):
             return
         level = None

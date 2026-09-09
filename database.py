@@ -210,45 +210,27 @@ async def get_last_reminder(user_id: int):
 # ============================================
 
 async def get_messages_today(user_id: int) -> int:
+    """Общий счётчик бесплатных вопросов за ВСЁ время (не за день)."""
     async with aiosqlite.connect(DATABASE_URL) as db:
         cursor = await db.execute(
-            "SELECT messages_today, last_message_date FROM users WHERE user_id = ?",
+            "SELECT messages_today FROM users WHERE user_id = ?",
             (user_id,)
         )
         result = await cursor.fetchone()
         if not result:
             return 0
-        
-        messages_count, last_date = result
-        today = datetime.now().strftime("%Y-%m-%d")
-        
-        if last_date != today:
-            return 0
-        return messages_count or 0
+        return result[0] or 0
 
 async def increment_messages_today(user_id: int):
     # Админ не тратит лимит
     if user_id == 862373702:
         return
-    
-    today = datetime.now().strftime("%Y-%m-%d")
+
     async with aiosqlite.connect(DATABASE_URL) as db:
-        cursor = await db.execute(
-            "SELECT last_message_date FROM users WHERE user_id = ?",
+        await db.execute(
+            "UPDATE users SET messages_today = messages_today + 1 WHERE user_id = ?",
             (user_id,)
         )
-        result = await cursor.fetchone()
-        
-        if not result or result[0] != today:
-            await db.execute(
-                "UPDATE users SET messages_today = 1, last_message_date = ? WHERE user_id = ?",
-                (today, user_id)
-            )
-        else:
-            await db.execute(
-                "UPDATE users SET messages_today = messages_today + 1 WHERE user_id = ?",
-                (user_id,)
-            )
         await db.commit()
 
 # ============================================

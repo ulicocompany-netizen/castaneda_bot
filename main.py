@@ -154,8 +154,8 @@ async def check_message_limit(user_id: int) -> bool:
 
 async def send_limit_message(message: types.Message):
     user_lang = await get_user_lang(message.from_user.id)
-    text_ru = "⚠️ **Ты достиг дневного лимита**\n\nБесплатно доступно 5 сообщений в день.\n\n🌟 **Оформи подписку** → /subscribe"
-    text_en = "⚠️ **You've reached the daily limit**\n\nFree version allows 5 messages per day.\n\n🌟 **Subscribe** → /subscribe"
+    text_ru = "⚠️ **Ты исчерпал бесплатные вопросы**\n\nБесплатно доступно 5 вопросов за всё время.\n\n🌟 **Оформи подписку** → /subscribe"
+    text_en = "⚠️ **You've used all your free questions**\n\nThe free version allows 5 questions in total.\n\n🌟 **Subscribe** → /subscribe"
     text = text_en if user_lang == "en" else text_ru
     await message.answer(text, parse_mode="Markdown")
 

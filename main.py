@@ -19,7 +19,7 @@ from database import (
     get_messages_today, increment_messages_today,
     delete_user_data,
     set_tale_step, get_tale_step, set_tale1_seen, is_tale1_seen,
-    log_fable_event
+    log_fable_event, is_age_confirmed
 )
 from keyboards import (
     get_language_keyboard, get_main_menu_keyboard, get_mood_keyboard,
@@ -167,7 +167,7 @@ async def send_limit_message(message: types.Message):
 async def cmd_start(message: types.Message):
     user_id = message.from_user.id
     context = await get_context(user_id)
-    age_confirmed = any(msg["content"] == "age_confirmed" for msg in context if msg["role"] == "system")
+    age_confirmed = await is_age_confirmed(user_id)
     
     if age_confirmed:
         user_lang = await get_user_lang(user_id)
@@ -400,7 +400,7 @@ async def age_confirmed(callback: CallbackQuery):
     user_id = callback.from_user.id
     user_lang = await get_user_lang(user_id)
     context = await get_context(user_id)
-    if any(msg["content"] == "age_confirmed" for msg in context):
+    if await is_age_confirmed(user_id):
         await safe_answer(callback)
         await callback.message.answer("🦅 Ты уже на пути, воин." if user_lang == "ru" else "🦅 You are already on the path, warrior.", reply_markup=get_main_menu_keyboard(user_lang))
         return
@@ -662,7 +662,7 @@ async def back_to_menu(callback: CallbackQuery):
 async def handle_voice(message: types.Message):
     user_id = message.from_user.id
     context = await get_context(user_id)
-    if not any(msg["content"] == "age_confirmed" for msg in context if msg["role"] == "system"):
+    if not await is_age_confirmed(user_id):
         return await message.answer("🦅 Сначала подтверди, что тебе есть 18 лет.", reply_markup=get_age_keyboard(await get_user_lang(user_id)))
     if not await check_message_limit(user_id):
         return await send_limit_message(message)
@@ -687,7 +687,7 @@ async def handle_text(message: types.Message):
     user_id = message.from_user.id
     context = await get_context(user_id)
     
-    if not any(msg["content"] == "age_confirmed" for msg in context if msg["role"] == "system"):
+    if not await is_age_confirmed(user_id):
         user_lang = await get_user_lang(user_id)
         theme = get_time_theme(user_lang)
         text = f"🦅 **CROSS THE THRESHOLD**\n\n⚠️ This path is for those who are 18+.\n\n**Are you ready?**" if user_lang == "en" else f"🦅 **ПЕРЕСТУПИТЬ ПОРОГ**\n\n⚠️ Этот путь — для тех, кому есть 18.\n\n**Готов ли ты?**"

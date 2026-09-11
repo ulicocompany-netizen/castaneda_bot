@@ -301,3 +301,17 @@ async def log_fable_event(user_id: int, event: str):
             (user_id, event, datetime.now().isoformat())
         )
         await db.commit()
+
+# ============================================
+# ПОРОГ (18+)
+# ============================================
+
+async def is_age_confirmed(user_id: int) -> bool:
+    """Порог переступлен? Проверка по ВСЕЙ истории, не по последним 10 сообщениям."""
+    async with aiosqlite.connect(DATABASE_URL) as db:
+        cursor = await db.execute(
+            "SELECT 1 FROM messages WHERE user_id = ? AND role = 'system' AND content = 'age_confirmed' LIMIT 1",
+            (user_id,)
+        )
+        row = await cursor.fetchone()
+        return row is not None

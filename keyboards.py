@@ -1,4 +1,5 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+CHANNEL_URL = "https://t.me/voron_skazki"
 
 TRANSLATIONS = {
     "ru": {
@@ -93,6 +94,7 @@ def get_main_menu_keyboard(lang="ru"):
             [InlineKeyboardButton(text="📖 Warrior's Diary", callback_data="warrior_diary")],
             [InlineKeyboardButton(text="👤 Consultation", callback_data="consultation")],
             [InlineKeyboardButton(text="🌟 Subscribe", callback_data="subscribe_menu")],
+            [InlineKeyboardButton(text="🔥 By the fire", url=CHANNEL_URL)],
             [InlineKeyboardButton(text="📜 Scrolls of the Path", callback_data="documents_menu")],
         ]
     else:
@@ -106,6 +108,7 @@ def get_main_menu_keyboard(lang="ru"):
             [InlineKeyboardButton(text="📖 Дневник воина", callback_data="warrior_diary")],
             [InlineKeyboardButton(text="👤 Консультация", callback_data="consultation")],
             [InlineKeyboardButton(text="🌟 Оформить подписку", callback_data="subscribe_menu")],
+            [InlineKeyboardButton(text="🔥 У костра", url=CHANNEL_URL)],
             [InlineKeyboardButton(text="📜 Свитки Пути", callback_data="documents_menu")],
         ]
     return InlineKeyboardMarkup(inline_keyboard=buttons)
@@ -224,11 +227,11 @@ def get_fable_do_keyboard(lang: str = "ru"):
     ])
 
 def get_fable_end_keyboard(lang: str = "ru"):
-    """Кнопки под END — вторая сказка + меню"""
-    text_next = " Открыть вторую сказку" if lang == "ru" else "🔥 Open second tale"
-    text_menu = "↩ В главное меню" if lang == "ru" else " To main menu"
+    """Кнопки под END — продолжение у костра + меню"""
+    text_next = "🪶 Продолжение — у костра" if lang == "ru" else "🪶 Continuation — by the fire"
+    text_menu = "↩ В главное меню" if lang == "ru" else "↩ To main menu"
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=text_next, callback_data="t1_next")],
+        [InlineKeyboardButton(text=text_next, url=CHANNEL_URL)],
         [InlineKeyboardButton(text=text_menu, callback_data="menu")]
     ])
 

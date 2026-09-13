@@ -19,7 +19,7 @@ from database import (
     get_messages_today, increment_messages_today,
     delete_user_data,
     set_tale_step, get_tale_step, set_tale1_seen, is_tale1_seen,
-    log_fable_event, is_age_confirmed
+    log_fable_event, is_age_confirmed, get_bot_stats
 )
 from keyboards import (
     get_language_keyboard, get_main_menu_keyboard, get_mood_keyboard,
@@ -162,6 +162,22 @@ async def send_limit_message(message: types.Message):
 # ============================================
 # 1. ВСЕ КОМАНДЫ
 # ============================================
+
+    await message.answer(text, parse_mode="Markdown")
+
+
+@dp.message(Command("stats"))
+async def cmd_stats(message: types.Message):
+    """Аналитика бота — только для админа."""
+    if message.from_user.id != 862373702:
+        return
+    ...
+    await message.answer("\n".join(lines), parse_mode="Markdown")
+
+
+@dp.message(Command("start"))
+async def cmd_start(message: types.Message):
+    ...
 
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):

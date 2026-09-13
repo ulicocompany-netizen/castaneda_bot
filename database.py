@@ -315,3 +315,32 @@ async def is_age_confirmed(user_id: int) -> bool:
         )
         row = await cursor.fetchone()
         return row is not None
+
+    # ============================================
+# АНАЛИТИКА
+# ============================================
+
+async def get_bot_stats() -> dict:
+    """Собрать статистику бота для админа."""
+    async with aiosqlite.connect(DATABASE_URL) as db:
+        total_users = (await (await db.execute("SELECT COUNT(*) FROM users")).fetchone())[0]
+        subscribed = (await (await db.execute(
+            "SELECT COUNT(*) FROM users WHERE subscription_end IS NOT NULL AND subscription_end > datetime('now')"
+        )).fetchone())[0]
+        total_msgs = (await (await db.execute("SELECT COUNT(*) FROM messages")).fetchone())[0]
+        user_msgs = (await (await db.execute(
+            "SELECT COUNT(*) FROM messages WHERE role='user'"
+        )).fetchone())[0]
+        
+        cursor = await db.execute(
+            "SELECT event, COUNT(*) FROM fable_events GROUP BY event ORDER BY 2 DESC"
+        )
+        funnel = await cursor.fetchall()
+        
+        return {
+            "total_users": total_users,
+            "subscribed": subscribed,
+            "total_msgs": total_msgs,
+            "user_msgs": user_msgs,
+            "funnel": funnel,
+        }

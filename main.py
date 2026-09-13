@@ -163,21 +163,8 @@ async def send_limit_message(message: types.Message):
 # 1. ВСЕ КОМАНДЫ
 # ============================================
 
-    await message.answer(text, parse_mode="Markdown")
 
 
-@dp.message(Command("stats"))
-async def cmd_stats(message: types.Message):
-    """Аналитика бота — только для админа."""
-    if message.from_user.id != 862373702:
-        return
-    ...
-    await message.answer("\n".join(lines), parse_mode="Markdown")
-
-
-@dp.message(Command("start"))
-async def cmd_start(message: types.Message):
-    ...
 
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):

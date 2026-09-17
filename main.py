@@ -444,6 +444,10 @@ async def process_language(callback: CallbackQuery):
 async def process_session(callback: CallbackQuery):
     session_type = callback.data.replace("session_", "")
     user_id, user_lang = callback.from_user.id, await get_user_lang(callback.from_user.id)
+    
+    # Обновляем время последнего взаимодействия, чтобы бот не "забывал" сессию
+    await update_last_interaction(user_id)
+    
     if session_type in ["dreams", "intention"] and not await is_subscribed(user_id):
         text = "🔒 **This practice requires subscription**\n\n🌟 Subscribe to unlock them.\n\n→ /subscribe" if user_lang == "en" else "🔒 **Эта практика доступна по подписке**\n\n🌟 Оформи подписку, чтобы открыть их.\n\n→ /subscribe"
         await callback.message.answer(text, parse_mode="Markdown")

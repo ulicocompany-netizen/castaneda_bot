@@ -100,7 +100,11 @@ async def raven_ai(user_prompt, fallback, lang="ru"):
             temperature=0.9,
             max_tokens=500
         )
-        return r.choices[0].message.content.strip()
+        result = r.choices[0].message.content.strip()
+        # Срезаем технический тег [LANG:...] если он попал в ответ
+        if result.startswith("[LANG:"):
+            result = result[result.find("]") + 1:].strip()
+        return result
     except Exception as e:
         err(e, "raven_ai")
         return fallback

@@ -344,7 +344,7 @@ def register_features(dp, bot):
     async def indulgi_answer(callback: CallbackQuery, state: FSMContext):
         cur = await state.get_state()
         if cur is None:
-            await safe_answer(callback)
+            await callback.answer("The test is over. Start again: ⚖️ Indulgimeter" if (await get_user_lang(callback.from_user.id)) == "en" else "Тест завершён. Начни заново: ⚖️ Индульгиметр")
             return
         await safe_answer(callback)
         try:
@@ -395,65 +395,3 @@ def register_features(dp, bot):
         await state.set_state(StalkingStates.waiting_answer)
         await callback.message.answer(exercises.get(exercise, "Choose an exercise."), parse_mode="Markdown")
         await callback.message.answer("🦅 When done — tell me: what did you feel? What did you notice? Write below." if user_lang == "en" else "🦅 Когда выполнишь — расскажи: что ты ощутил? Что заметил? Напиши ниже.")
-
-    # СЕАНСЫ / СМЕРТЬ / СНОВИДЕНИЕ
-    @dp.callback_query(lambda c: c.data == "session_death")
-    async def session_death(callback: CallbackQuery, state: FSMContext):
-        await safe_answer(callback)
-        try:
-            lang = await get_user_lang(callback.from_user.id)
-            L = lib(lang)
-            await bot.send_chat_action(callback.from_user.id, "typing")
-            await asyncio.sleep(3)
-            fallback = L.DEATH_FALLBACK + "\n\n🦅 " + random.choice(L.DON_JUAN_QUOTES)
-            text = await raven_ai("Позови воина от имени его смерти. Скажи ей, что воин хочет её услышать. Дай 3-4 хриплых, трезвых предложения. Не списком. Как дон Хуан: «Смерть — единственный советчик, который не лжёт».", fallback, lang)
-            kb = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="🪶 I heard" if lang == "en" else "🪶 Я услышал", callback_data="main_menu")],
-                [InlineKeyboardButton(text="↩ Menu" if lang == "en" else "↩ В меню", callback_data="main_menu")]
-            ])
-            await callback.message.answer(text, reply_markup=kb)
-            await send_raven_voice(bot, callback.from_user.id, "death")
-        except Exception as e:
-            err(e, "session_death")
-
-    @dp.callback_query(lambda c: c.data == "session_dreams")
-    async def session_dreams(callback: CallbackQuery, state: FSMContext):
-        await safe_answer(callback)
-        try:
-            lang = await get_user_lang(callback.from_user.id)
-            L = lib(lang)
-            await bot.send_chat_action(callback.from_user.id, "typing")
-            await asyncio.sleep(3)
-            fallback = L.DREAMS_FALLBACK + "\n\n🦅 " + random.choice(L.DON_JUAN_QUOTES)
-            text = await raven_ai("Дай воину короткое наставление по сновидению (искусству сна у Кастанеды): как найти руки во сне, как удержать точку сборки, что значит видеть мотыльков. 3-4 предложения, без списков, по-вороньи.", fallback, lang)
-            kb = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="🪶 I will remember" if lang == "en" else "🪶 Я запомню", callback_data="main_menu")],
-                [InlineKeyboardButton(text="↩ Menu" if lang == "en" else "↩ В меню", callback_data="main_menu")]
-            ])
-            await callback.message.answer(text, reply_markup=kb)
-            await send_raven_voice(bot, callback.from_user.id, "dreams")
-        except Exception as e:
-            err(e, "session_dreams")
-
-    @dp.callback_query(lambda c: c.data == "session_consult")
-    async def session_consult(callback: CallbackQuery, state: FSMContext):
-        await safe_answer(callback)
-        lang = await get_user_lang(callback.from_user.id)
-        await state.set_state(StalkingStates.waiting_answer)
-        pending["task"][callback.from_user.id] = "consult"
-        await callback.message.answer("🦅 **The Raven is listening.**\n\nTell me what holds you right now. One paragraph. I will answer from the place where the warrior sees." if lang == "en" else "🦅 **Ворон слушает.**\n\nРасскажи, что тебя сейчас держит. Один абзац. Я отвечу с того места, откуда видит воин.")
-
-    # ВОЗВРАТ В МЕНЮ
-    @dp.callback_query(lambda c: c.data == "main_menu")
-    async def to_main_menu(callback: CallbackQuery, state: FSMContext):
-        await safe_answer(callback)
-        await state.clear()
-        user_lang = await get_user_lang(callback.from_user.id)
-        await callback.message.answer("🦅 **Main menu:**" if user_lang == "en" else "🦅 **Главное меню:**", reply_markup=get_main_menu_keyboard(user_lang), parse_mode="Markdown")
-
-    # СБРОС ПРИВЕТСТВИЯ
-    @dp.callback_query(lambda c: c.data == "channel_start")
-    async def channel_start(callback: CallbackQuery):
-        await safe_answer(callback)
-        lang = await get_user_lang(callback.from_user.id)
-        await callback.message.answer("✅ You are with the Raven now.\n\nPress «🌑 Stop the World» or «🦅 Path of the Heart» to begin." if lang == "en" else "✅ Ты теперь с Вороном.\n\nНажми «🌑 Остановить мир» или «🦅 Путь сердца», чтобы начать.")

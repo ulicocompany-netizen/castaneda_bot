@@ -54,11 +54,11 @@ register_analytics(dp)
 
 deepseek_client = AsyncOpenAI(
     api_key=os.getenv("DEEPSEEK_API_KEY"),
-    base_url="https://api.deepseek.com/v1", timeout=30.0, max_retries=1
+    base_url="https://api.deepseek.com/v1", timeout=10.0, max_retries=0
 )
 
 openai_client = AsyncOpenAI(
-    api_key=os.getenv("OPENAI_API_KEY"), timeout=30.0, max_retries=1
+    api_key=os.getenv("OPENAI_API_KEY"), timeout=10.0, max_retries=0
 )
 
 YOUR_ID = 862373702

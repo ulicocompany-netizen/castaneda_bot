@@ -25,10 +25,17 @@ DB_PATH = "bot.db"
 
 deepseek_client = AsyncOpenAI(
     api_key=os.getenv("DEEPSEEK_API_KEY"),
-    base_url="https://api.deepseek.com/v1", timeout=30.0, max_retries=1
+    base_url="https://api.deepseek.com/v1", timeout=10.0, max_retries=0
 )
 
 RAVEN_SYSTEM = "Ты — Ворон, проводник по пути воина в стиле учения Карлоса Кастанеды. Говори хрипло, спокойно, без «успешного успеха». Используй образы дона Хуана: смерть как советчик, точка сборки, мотыльки внутреннего диалога, важность, безупречность, остановка мира, путь с сердцем. Отвечай КОРОТКО: 3-6 предложений, без списков и заголовков. LANGUAGE RULE: if the request starts with [LANG:EN] respond in English; if [LANG:RU] respond in Russian."
+
+# ---------- БЕЗОПАСНЫЙ ОТВЕТ НА КНОПКУ ----------
+async def safe_answer(cb):
+    try:
+        await cb.answer()
+    except Exception:
+        pass
 
 class StalkingStates(StatesGroup):
     waiting_answer = State()
@@ -178,7 +185,7 @@ def register_features(dp, bot):
     # ПУТЬ СЕРДЦА · ПРАКТИКА ДНЯ
     @dp.callback_query(lambda c: c.data == "daily_practice")
     async def daily_practice(callback: CallbackQuery, state: FSMContext):
-        await callback.answer()
+        await safe_answer(callback)
         choice = random.choice(["stalking", "shift", "magic", "breathing"])
         lang = await get_user_lang(callback.from_user.id)
         await callback.message.answer("❤️ **Path of the Heart.**\n\nToday the Raven chose this practice for you:" if lang == "en" else "❤️ **Путь сердца.**\n\nСегодня Ворон выбрал для тебя эту практику:", parse_mode="Markdown")
@@ -187,7 +194,7 @@ def register_features(dp, bot):
     # ДНЕВНИК ВОИНА
     @dp.callback_query(lambda c: c.data == "warrior_diary")
     async def warrior_diary(callback: CallbackQuery):
-        await callback.answer()
+        await safe_answer(callback)
         lang = await get_user_lang(callback.from_user.id)
         rows = await get_stalking_entries(callback.from_user.id)
         if not rows:
@@ -202,7 +209,7 @@ def register_features(dp, bot):
     # ОСТАНОВИТЬ МИР (диагностика)
     @dp.callback_query(lambda c: c.data == "diagnose_force")
     async def diagnose_force(callback: CallbackQuery):
-        await callback.answer()
+        await safe_answer(callback)
         lang = await get_user_lang(callback.from_user.id)
         kb = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="🌪 Irritation / Anger" if lang == "en" else "🌪 Раздражение / Злость", callback_data="diagnose_anger"),
@@ -214,7 +221,7 @@ def register_features(dp, bot):
 
     @dp.callback_query(lambda c: c.data in ["diagnose_anger", "diagnose_apathy", "diagnose_rush", "diagnose_prove"])
     async def diagnose_answer(callback: CallbackQuery, state: FSMContext):
-        await callback.answer()
+        await safe_answer(callback)
         try:
             lang = await get_user_lang(callback.from_user.id)
             L = lib(lang)
@@ -236,26 +243,26 @@ def register_features(dp, bot):
 
     @dp.callback_query(lambda c: c.data == "diagnose_commit")
     async def diagnose_commit(callback: CallbackQuery):
-        await callback.answer()
+        await safe_answer(callback)
         lang = await get_user_lang(callback.from_user.id)
         await callback.message.answer("🦅 Write your intention in one phrase.\n\nFor example: «Today I will not justify myself» or «I let go of my resentment toward...»" if lang == "en" else "🦅 Напиши своё намерение одной фразой.\n\nНапример: «Сегодня я не буду оправдываться» или «Я отпускаю обиду на...»")
 
     # ЩЕПОТКА МАГИИ
     @dp.callback_query(lambda c: c.data == "magic_dust")
     async def magic_dust(callback: CallbackQuery):
-        await callback.answer()
+        await safe_answer(callback)
         await do_magic(callback)
         await send_raven_voice(bot, callback.from_user.id, "magic")
 
     # СДВИНУТЬ ВОСПРИЯТИЕ
     @dp.callback_query(lambda c: c.data == "shift_assembly")
     async def shift_assembly(callback: CallbackQuery):
-        await callback.answer()
+        await safe_answer(callback)
         await do_shift(callback)
 
     @dp.callback_query(lambda c: c.data == "shift_done")
     async def shift_done(callback: CallbackQuery, state: FSMContext):
-        await callback.answer()
+        await safe_answer(callback)
         try:
             lang = await get_user_lang(callback.from_user.id)
             await bot.send_chat_action(callback.from_user.id, "typing")
@@ -272,7 +279,7 @@ def register_features(dp, bot):
     # ВЫСЛЕДИТЬ СЕБЯ
     @dp.callback_query(lambda c: c.data == "stalking_start")
     async def stalking_start(callback: CallbackQuery, state: FSMContext):
-        await callback.answer()
+        await safe_answer(callback)
         await do_stalking(callback, state)
 
     @dp.message(StalkingStates.waiting_answer, F.text & ~F.text.startswith("/"))
@@ -296,7 +303,7 @@ def register_features(dp, bot):
 
     @dp.callback_query(lambda c: c.data == "stalking_save")
     async def stalking_save(callback: CallbackQuery, state: FSMContext):
-        await callback.answer()
+        await safe_answer(callback)
         try:
             user_id = callback.from_user.id
             lang = await get_user_lang(user_id)
@@ -311,7 +318,7 @@ def register_features(dp, bot):
 
     @dp.callback_query(lambda c: c.data == "stalking_skip")
     async def stalking_skip(callback: CallbackQuery, state: FSMContext):
-        await callback.answer()
+        await safe_answer(callback)
         await state.clear()
         user_lang = await get_user_lang(callback.from_user.id)
         await callback.message.answer("🦅 **Main menu:**" if user_lang == "en" else "🦅 **Главное меню:**", reply_markup=get_main_menu_keyboard(user_lang), parse_mode="Markdown")
@@ -319,7 +326,7 @@ def register_features(dp, bot):
     # ИНДУЛЬГИМЕТР
     @dp.callback_query(lambda c: c.data == "indulgimeter_start")
     async def indulgi_start(callback: CallbackQuery, state: FSMContext):
-        await callback.answer()
+        await safe_answer(callback)
         await state.clear()
         lang = await get_user_lang(callback.from_user.id)
         kb = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="▶️ Start the test" if lang == "en" else "▶️ Начать тест", callback_data="indulgi_begin")]])
@@ -327,7 +334,7 @@ def register_features(dp, bot):
 
     @dp.callback_query(lambda c: c.data == "indulgi_begin")
     async def indulgi_begin(callback: CallbackQuery, state: FSMContext):
-        await callback.answer()
+        await safe_answer(callback)
         lang = await get_user_lang(callback.from_user.id)
         await state.set_state(IndulgiStates.q1)
         await state.update_data(score=0)
@@ -337,9 +344,9 @@ def register_features(dp, bot):
     async def indulgi_answer(callback: CallbackQuery, state: FSMContext):
         cur = await state.get_state()
         if cur is None:
-            await callback.answer("The test is over. Start again: ⚖️ Indulgimeter" if (await get_user_lang(callback.from_user.id)) == "en" else "Тест завершён. Начни заново: ⚖️ Индульгиметр")
+            await safe_answer(callback)
             return
-        await callback.answer()
+        await safe_answer(callback)
         try:
             lang = await get_user_lang(callback.from_user.id)
             L = lib(lang)
@@ -376,7 +383,7 @@ def register_features(dp, bot):
     # ДЫХАНИЕ С РЕФЛЕКСИЕЙ
     @dp.callback_query(lambda c: c.data.startswith("breathe_"))
     async def breathing_exercise(callback: CallbackQuery, state: FSMContext):
-        await callback.answer()
+        await safe_answer(callback)
         user_id = callback.from_user.id
         exercise = callback.data.replace("breathe_", "")
         user_lang = await get_user_lang(user_id)
@@ -388,3 +395,65 @@ def register_features(dp, bot):
         await state.set_state(StalkingStates.waiting_answer)
         await callback.message.answer(exercises.get(exercise, "Choose an exercise."), parse_mode="Markdown")
         await callback.message.answer("🦅 When done — tell me: what did you feel? What did you notice? Write below." if user_lang == "en" else "🦅 Когда выполнишь — расскажи: что ты ощутил? Что заметил? Напиши ниже.")
+
+    # СЕАНСЫ / СМЕРТЬ / СНОВИДЕНИЕ
+    @dp.callback_query(lambda c: c.data == "session_death")
+    async def session_death(callback: CallbackQuery, state: FSMContext):
+        await safe_answer(callback)
+        try:
+            lang = await get_user_lang(callback.from_user.id)
+            L = lib(lang)
+            await bot.send_chat_action(callback.from_user.id, "typing")
+            await asyncio.sleep(3)
+            fallback = L.DEATH_FALLBACK + "\n\n🦅 " + random.choice(L.DON_JUAN_QUOTES)
+            text = await raven_ai("Позови воина от имени его смерти. Скажи ей, что воин хочет её услышать. Дай 3-4 хриплых, трезвых предложения. Не списком. Как дон Хуан: «Смерть — единственный советчик, который не лжёт».", fallback, lang)
+            kb = InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="🪶 I heard" if lang == "en" else "🪶 Я услышал", callback_data="main_menu")],
+                [InlineKeyboardButton(text="↩ Menu" if lang == "en" else "↩ В меню", callback_data="main_menu")]
+            ])
+            await callback.message.answer(text, reply_markup=kb)
+            await send_raven_voice(bot, callback.from_user.id, "death")
+        except Exception as e:
+            err(e, "session_death")
+
+    @dp.callback_query(lambda c: c.data == "session_dreams")
+    async def session_dreams(callback: CallbackQuery, state: FSMContext):
+        await safe_answer(callback)
+        try:
+            lang = await get_user_lang(callback.from_user.id)
+            L = lib(lang)
+            await bot.send_chat_action(callback.from_user.id, "typing")
+            await asyncio.sleep(3)
+            fallback = L.DREAMS_FALLBACK + "\n\n🦅 " + random.choice(L.DON_JUAN_QUOTES)
+            text = await raven_ai("Дай воину короткое наставление по сновидению (искусству сна у Кастанеды): как найти руки во сне, как удержать точку сборки, что значит видеть мотыльков. 3-4 предложения, без списков, по-вороньи.", fallback, lang)
+            kb = InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="🪶 I will remember" if lang == "en" else "🪶 Я запомню", callback_data="main_menu")],
+                [InlineKeyboardButton(text="↩ Menu" if lang == "en" else "↩ В меню", callback_data="main_menu")]
+            ])
+            await callback.message.answer(text, reply_markup=kb)
+            await send_raven_voice(bot, callback.from_user.id, "dreams")
+        except Exception as e:
+            err(e, "session_dreams")
+
+    @dp.callback_query(lambda c: c.data == "session_consult")
+    async def session_consult(callback: CallbackQuery, state: FSMContext):
+        await safe_answer(callback)
+        lang = await get_user_lang(callback.from_user.id)
+        await state.set_state(StalkingStates.waiting_answer)
+        pending["task"][callback.from_user.id] = "consult"
+        await callback.message.answer("🦅 **The Raven is listening.**\n\nTell me what holds you right now. One paragraph. I will answer from the place where the warrior sees." if lang == "en" else "🦅 **Ворон слушает.**\n\nРасскажи, что тебя сейчас держит. Один абзац. Я отвечу с того места, откуда видит воин.")
+
+    # ВОЗВРАТ В МЕНЮ
+    @dp.callback_query(lambda c: c.data == "main_menu")
+    async def to_main_menu(callback: CallbackQuery, state: FSMContext):
+        await safe_answer(callback)
+        await state.clear()
+        user_lang = await get_user_lang(callback.from_user.id)
+        await callback.message.answer("🦅 **Main menu:**" if user_lang == "en" else "🦅 **Главное меню:**", reply_markup=get_main_menu_keyboard(user_lang), parse_mode="Markdown")
+
+    # СБРОС ПРИВЕТСТВИЯ
+    @dp.callback_query(lambda c: c.data == "channel_start")
+    async def channel_start(callback: CallbackQuery):
+        await safe_answer(callback)
+        lang = await get_user_lang(callback.from_user.id)
+        await callback.message.answer("✅ You are with the Raven now.\n\nPress «🌑 Stop the World» or «🦅 Path of the Heart» to begin." if lang == "en" else "✅ Ты теперь с Вороном.\n\nНажми «🌑 Остановить мир» или «🦅 Путь сердца», чтобы начать.")

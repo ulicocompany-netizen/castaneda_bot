@@ -25,7 +25,7 @@ DB_PATH = "bot.db"
 
 deepseek_client = AsyncOpenAI(
     api_key=os.getenv("DEEPSEEK_API_KEY"),
-    base_url="https://api.deepseek.com/v1"
+    base_url="https://api.deepseek.com/v1", timeout=30.0, max_retries=1
 )
 
 RAVEN_SYSTEM = "Ты — Ворон, проводник по пути воина в стиле учения Карлоса Кастанеды. Говори хрипло, спокойно, без «успешного успеха». Используй образы дона Хуана: смерть как советчик, точка сборки, мотыльки внутреннего диалога, важность, безупречность, остановка мира, путь с сердцем. Отвечай КОРОТКО: 3-6 предложений, без списков и заголовков. LANGUAGE RULE: if the request starts with [LANG:EN] respond in English; if [LANG:RU] respond in Russian."

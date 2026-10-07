@@ -49,7 +49,7 @@ bot = Bot(token=os.getenv("BOT_TOKEN"))
 dp = Dispatcher()
 from features import register_features
 register_features(dp, bot)
-from analytics import register_analytics, get_media_file_id, set_media_file_id
+from analytics import register_analytics, get_media_file_id, set_media_file_id, log
 register_analytics(dp)
 
 deepseek_client = AsyncOpenAI(

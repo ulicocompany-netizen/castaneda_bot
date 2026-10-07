@@ -26,7 +26,7 @@ async def log(user_id, etype, event):
             await db.execute("INSERT INTO analytics (user_id, date, type, event) VALUES (?,?,?,?)", (user_id, datetime.now().isoformat(), etype, event))
             await db.commit()
     except Exception as e:
-        print(f"❌ ANALYTICS: {e}")
+        print(f"❗ ANALYTICS: {e}")
 
 def register_analytics(dp):
     @dp.message.outer_middleware()
@@ -55,10 +55,22 @@ def register_analytics(dp):
             users = (await (await db.execute("SELECT COUNT(DISTINCT user_id) c FROM analytics")).fetchone())["c"]
             ru = (await (await db.execute("SELECT COUNT(DISTINCT user_id) c FROM analytics WHERE event='lang_ru'")).fetchone())["c"]
             en = (await (await db.execute("SELECT COUNT(DISTINCT user_id) c FROM analytics WHERE event='lang_en'")).fetchone())["c"]
+            
+            # Источники трафика (deep-link)
+            src_rows = await (await db.execute("SELECT event, COUNT(*) c FROM analytics WHERE type='src' GROUP BY event ORDER BY c DESC")).fetchall()
+            
             rows = await (await db.execute("SELECT event, COUNT(*) c FROM analytics WHERE type='btn' GROUP BY event ORDER BY c DESC LIMIT 15")).fetchall()
-        lines = [f"📊 АНАЛИТИКА\n\n👥 Уникальных пользователей: {users}", f"🇷🇺 RU: {ru} · 🇬🇧 EN: {en}", "", "🔘 Кнопки (топ-15):"]
+        
+        lines = [f"📊 АНАЛИТИКА\n\n👥 Уникальных пользователей: {users}", f"🇷 RU: {ru} · 🇧 EN: {en}", "", "⚪ Кнопки (top-15):"]
+        
+        # Добавляем источники, если есть
+        if src_rows:
+            lines.append("📡 Источники: " + " · ".join(f"{r[0]}: {r[1]}" for r in src_rows))
+            lines.append("")
+        
         for r in rows:
             lines.append(f"{r['event']}: {r['c']}")
+        
         await message.answer("\n".join(lines))
 
 async def get_media_file_id(key):
@@ -67,11 +79,10 @@ async def get_media_file_id(key):
         await db.execute("CREATE TABLE IF NOT EXISTS media_cache (key TEXT PRIMARY KEY, file_id TEXT)")
         cur = await db.execute("SELECT file_id FROM media_cache WHERE key=?", (key,))
         row = await cur.fetchone()
-    return row[0] if row else None
+        return row[0] if row else None
 
 async def set_media_file_id(key, file_id):
     await ensure()
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute("CREATE TABLE IF NOT EXISTS media_cache (key TEXT PRIMARY KEY, file_id TEXT)")
-        await db.execute("INSERT OR REPLACE INTO media_cache (key, file_id) VALUES (?,?)", (key, file_id))
         await db.commit()

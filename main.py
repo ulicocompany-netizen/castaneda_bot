@@ -168,6 +168,9 @@ async def send_limit_message(message: types.Message):
 
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
+    args = message.text.split(maxsplit=1)
+    source = args[1] if len(args) > 1 else "direct"
+    await log(message.from_user.id, "src", source)
     user_id = message.from_user.id
     context = await get_context(user_id)
     age_confirmed = await is_age_confirmed(user_id)
